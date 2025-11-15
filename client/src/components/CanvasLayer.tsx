@@ -47,9 +47,12 @@ function CanvasLayer({ drawMethod }: CanvasLayerProps) {
     redraw();
 
     return () => {
-      map.off("move zoom", redraw);
+      map.off("move", redraw);
       map.off("resize", resizeCanvas);
-      if (canvasRef.current) mapContainer.removeChild(canvasRef.current);
+
+      if (canvasRef.current) {
+        mapContainer.removeChild(canvasRef.current);
+      }
     };
   }, [map, drawMethod]);
 

@@ -31,6 +31,16 @@ function SettingsPanel() {
                         </div>
                         <hr className="border-slate-300"></hr>
 
+                        {/* show map tiles toggle */}
+                        <div className="flex flex-row items-center justify-between">
+                            <div>Show Map Tiles</div>
+                            <input
+                                type="checkbox"
+                                checked={ctx.showMapTiles}
+                                onChange={(e) => ctx.setShowMapTiles(e.target.checked)}
+                            />
+                        </div>
+
                         {/* eec toggle */}
                         <div className="flex flex-row items-center justify-between">
                             <div>Show EEC</div>
@@ -76,6 +86,31 @@ function SettingsPanel() {
                             />
                         </div>
 
+                        {/* show depth image toggle */}
+                        <div className="flex flex-row items-center justify-between">
+                            <div>Show Depth Image</div>
+                            <input
+                                type="checkbox"
+                                checked={ctx.showDepthImage}
+                                onChange={(e) => ctx.setShowDepthImage(e.target.checked)}
+                            />
+                        </div>
+
+                        {/* depth image opacity slider */}
+                        <div className="flex flex-col">
+                            <div className="flex flex-row justify-between">
+                                <div>Depth Image Opacity: </div>
+                                <div>{ctx.depthImageOpacity}</div>
+                            </div>
+                            <input
+                                type="range"
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                value={ctx.depthImageOpacity}
+                                onChange={(e) => ctx.setDepthImageOpacity(parseFloat(e.target.value))}
+                            />
+                        </div>
 
                     </div>
                 )

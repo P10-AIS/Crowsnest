@@ -7,14 +7,14 @@ export function prepareTrajectories(trajectories: Trajectory[]): ZoomLevels<Traj
 
     const trajectoriesByZoom: ZoomLevels<Trajectory[]> = [];
 
-    const minZoom = 1;
-    const maxZoom = 12;
+    const minZoom = 3;
+    const maxZoom = 9;
 
     const minStep = 1;
-    const maxStep = 200;
+    const maxStep = 600;
 
 
-    for (let zoom = 1; zoom <= 21; zoom++) {
+    for (let zoom = 1; zoom <= 18; zoom++) {
         const step = maxStep - ((zoom - minZoom) / (maxZoom - minZoom)) * (maxStep - minStep);
         const stepInt = Math.max(1, Math.round(step));
 
@@ -56,15 +56,15 @@ export function prepareEecPolygons(rawCoordinates: number[][][][]): ZoomLevels<P
         } as Polygon;
     });
 
-    const minZoom = 1;
-    const maxZoom = 12;
+    const minZoom = 3;
+    const maxZoom = 9;
 
     const minStep = 1;
     const maxStep = 20;
 
     const polygonsByZoom: ZoomLevels<Polygon[]> = [];
 
-    for (let zoom = 1; zoom <= 21; zoom++) {
+    for (let zoom = 1; zoom <= 18; zoom++) {
         const step =
             maxStep -
             ((zoom - minZoom) / (maxZoom - minZoom)) * (maxStep - minStep);
