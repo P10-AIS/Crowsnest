@@ -92,6 +92,16 @@ export function prepareEecPolygons(rawCoordinates: number[][][][]): ZoomLevels<P
 
     return polygonsByZoom;
 }
+
 function simplify<T>(arr: T[], step: number): T[] {
-    return arr.filter((_, i) => i % step === 0);
+    if (arr.length === 0) return [];
+
+    const result = arr.filter((_, i) => i % step === 0);
+
+    const last = arr[arr.length - 1];
+    if (result[result.length - 1] !== last) {
+        result.push(last);
+    }
+
+    return result;
 }

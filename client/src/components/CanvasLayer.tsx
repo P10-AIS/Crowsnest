@@ -11,7 +11,7 @@ interface CanvasLayerProps {
   drawMethod: (info: drawInfo) => void;
 }
 
-export default function CanvasLayer({ drawMethod }: CanvasLayerProps) {
+function CanvasLayer({ drawMethod }: CanvasLayerProps) {
   const map = useMap();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -47,7 +47,7 @@ export default function CanvasLayer({ drawMethod }: CanvasLayerProps) {
     redraw();
 
     return () => {
-      map.off("move", redraw);
+      map.off("move zoom", redraw);
       map.off("resize", resizeCanvas);
       if (canvasRef.current) mapContainer.removeChild(canvasRef.current);
     };
@@ -55,3 +55,5 @@ export default function CanvasLayer({ drawMethod }: CanvasLayerProps) {
 
   return null;
 }
+
+export default CanvasLayer;

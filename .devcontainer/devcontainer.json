@@ -7,5 +7,12 @@
 		"docker-compose.yml"
 	],
 	"service": "devcontainer",
-	"postCreateCommand": "cd client && npm ci && cd ../server && npm ci"
+	"postCreateCommand": "cd client && npm ci && cd ../server && npm ci",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"bradlc.vscode-tailwindcss"
+			]
+		}
+	}
 }
