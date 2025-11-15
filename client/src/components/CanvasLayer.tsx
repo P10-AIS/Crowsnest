@@ -40,14 +40,14 @@ export default function CanvasLayer({ drawMethod }: CanvasLayerProps) {
       redraw();
     };
 
-    map.on("move zoom", redraw);
+    map.on("move", redraw);
     map.on("resize", resizeCanvas);
 
     resizeCanvas();
     redraw();
 
     return () => {
-      map.off("move zoom", redraw);
+      map.off("move", redraw);
       map.off("resize", resizeCanvas);
       if (canvasRef.current) mapContainer.removeChild(canvasRef.current);
     };

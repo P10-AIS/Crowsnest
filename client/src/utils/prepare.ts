@@ -1,11 +1,11 @@
 import type { Polygon } from "../types/Polygon";
-import type { TrajectoriesByZoom } from "../types/TrajectoriesByZoom";
+import type { ZoomLevels } from "../types/ZoomLevels";
 import type { Trajectory } from "../types/Trajectory";
 import { getBoundingBox } from "./bounds";
 
-export function prepareTrajectories(trajectories: Trajectory[]): TrajectoriesByZoom {
+export function prepareTrajectories(trajectories: Trajectory[]): ZoomLevels<Trajectory[]> {
 
-    const trajectoriesByZoom: TrajectoriesByZoom = {};
+    const trajectoriesByZoom: ZoomLevels<Trajectory[]> = [];
 
     const minZoom = 1;
     const maxZoom = 12;
@@ -19,7 +19,7 @@ export function prepareTrajectories(trajectories: Trajectory[]): TrajectoriesByZ
         const stepInt = Math.max(1, Math.round(step));
 
         trajectoriesByZoom[zoom] = trajectories.map((traj) => {
-            const messages = traj.messages.filter((_, i) => i % stepInt === 0);
+            const messages = simplify(traj.messages, stepInt);
             const points = messages.map(msg => msg.point);
             const simplifiedTrajectory: Trajectory = {
                 id: traj.id,
@@ -34,27 +34,64 @@ export function prepareTrajectories(trajectories: Trajectory[]): TrajectoriesByZ
 }
 
 
-export function prepareEecPolygons(rawCoordinates: number[][][][]): Polygon[] {
-
-    const polygons = rawCoordinates.map((polygon) => {
+export function prepareEecPolygons(rawCoordinates: number[][][][]): ZoomLevels<Polygon[]> {
+    const polygonsBase = rawCoordinates.map((polygon) => {
         const outlineCoords = polygon[0].map((coord) => ({ lat: coord[1], lng: coord[0] }));
         const holesCoords = polygon.slice(1).map((ring) =>
             ring.map((coord) => ({ lat: coord[1], lng: coord[0] }))
         );
 
         return {
-            boundingBox: getBoundingBox(outlineCoords),
             outline: {
                 boundingBox: getBoundingBox(outlineCoords),
                 points: outlineCoords
             },
-            holes: holesCoords.length > 0 ? holesCoords.map((hole) => ({
-                boundingBox: getBoundingBox(hole),
-                points: hole
-            })) : undefined,
-        }
-
+            holes: holesCoords.length > 0
+                ? holesCoords.map((hole) => ({
+                    boundingBox: getBoundingBox(hole),
+                    points: hole
+                }))
+                : undefined,
+            boundingBox: getBoundingBox(outlineCoords)
+        } as Polygon;
     });
 
-    return polygons;
+    const minZoom = 1;
+    const maxZoom = 12;
+
+    const minStep = 1;
+    const maxStep = 20;
+
+    const polygonsByZoom: ZoomLevels<Polygon[]> = [];
+
+    for (let zoom = 1; zoom <= 21; zoom++) {
+        const step =
+            maxStep -
+            ((zoom - minZoom) / (maxZoom - minZoom)) * (maxStep - minStep);
+        const stepInt = Math.max(1, Math.round(step));
+
+        polygonsByZoom[zoom] = polygonsBase.map((poly) => {
+            // const simplifiedOutline = simplify(poly.outline.points, stepInt);
+
+            const simplifiedHoles = poly.holes
+                ? poly.holes.map((hole) => ({
+                    points: simplify(hole.points, stepInt),
+                    boundingBox: getBoundingBox(hole.points)
+                }))
+                : undefined;
+
+            return {
+                outline: {
+                    points: poly.outline.points,
+                    boundingBox: getBoundingBox(poly.outline.points)
+                },
+                holes: simplifiedHoles,
+            };
+        });
+    }
+
+    return polygonsByZoom;
+}
+function simplify<T>(arr: T[], step: number): T[] {
+    return arr.filter((_, i) => i % step === 0);
 }

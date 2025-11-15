@@ -1,11 +1,12 @@
 import type { drawInfo as DrawInfo } from "../components/CanvasLayer";
 import type { Bound } from "../types/Bound";
 import type { Polygon } from "../types/Polygon";
-import type { TrajectoriesByZoom } from "../types/TrajectoriesByZoom";
+import type { Trajectory } from "../types/Trajectory";
+import type { ZoomLevels } from "../types/ZoomLevels";
 
 export const draw = (
-  trajectories: TrajectoriesByZoom,
-  polygons: Polygon[],
+  trajectories: ZoomLevels<Trajectory[]>,
+  polygons: ZoomLevels<Polygon[]>,
   info: DrawInfo
 ) => {
   const { map, canvas } = info;
@@ -24,7 +25,7 @@ export const draw = (
   const zoom = map.getZoom();
 
   // ---- Draw polygons ----
-  polygons.forEach((polygon) => {
+  polygons[zoom]?.forEach((polygon) => {
     if (!isBoundingBoxInView(polygon.outline.boundingBox, viewBox)) return;
 
     // Draw the main outline

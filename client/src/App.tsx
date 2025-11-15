@@ -3,15 +3,16 @@ import MapWithCanvas from './components/MapWithCanvas';
 import { draw } from './utils/draw';
 import CanvasLayer from './components/CanvasLayer';
 import { parseTrajectory } from './utils/parse';
-import type { TrajectoriesByZoom } from './types/TrajectoriesByZoom';
+import type { ZoomLevels } from './types/ZoomLevels';
 import { prepareEecPolygons, prepareTrajectories } from './utils/prepare';
 import type { Polygon } from './types/Polygon';
 import eecData from './assets/eec.json';
+import type { Trajectory } from './types/Trajectory';
 
-const polygons: Polygon[] = prepareEecPolygons(eecData.features[0].geometry.coordinates);
+const polygons: ZoomLevels<Polygon[]> = prepareEecPolygons(eecData.features[0].geometry.coordinates);
 
 function App() {
-  const [trajectories, setTrajectories] = useState<TrajectoriesByZoom>({});
+  const [trajectories, setTrajectories] = useState<ZoomLevels<Trajectory[]>>([]);
 
   useEffect(() => {
     const fetchLatestTrajectory = async () => {
