@@ -1,5 +1,6 @@
+import type { Point } from "./Point";
+
 export type AisMessage = {
-  lat: number;
-  lng: number;
+  point: Point;
   heading: number;
 };

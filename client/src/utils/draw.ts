@@ -1,59 +1,106 @@
-
 import type { drawInfo as DrawInfo } from "../components/CanvasLayer";
 import type { Bound } from "../types/Bound";
+import type { Polygon } from "../types/Polygon";
 import type { TrajectoriesByZoom } from "../types/TrajectoriesByZoom";
 
-export const drawTrajectory = (trajectories: TrajectoriesByZoom, info: DrawInfo) => {
+export const draw = (
+  trajectories: TrajectoriesByZoom,
+  polygons: Polygon[],
+  info: DrawInfo
+) => {
   const { map, canvas } = info;
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  if (Object.keys(trajectories).length === 0) {
-    return;
-  }
-
   const bounds = map.getBounds();
-  const viewBox = {
+  const viewBox: Bound = {
     minLat: bounds.getSouth(),
     minLng: bounds.getWest(),
     maxLat: bounds.getNorth(),
     maxLng: bounds.getEast(),
   };
 
+
   const zoom = map.getZoom();
 
-  trajectories[zoom].forEach((t) => {
+  // ---- Draw polygons ----
+  polygons.forEach((polygon) => {
+    if (!isBoundingBoxInView(polygon.outline.boundingBox, viewBox)) return;
+
+    // Draw the main outline
+    if (polygon.outline.points.length > 0) {
+      ctx.beginPath();
+      const start = map.latLngToContainerPoint([polygon.outline.points[0].lat, polygon.outline.points[0].lng]);
+      ctx.moveTo(start.x, start.y);
+
+      for (let i = 1; i < polygon.outline.points.length; i++) {
+        const pt = map.latLngToContainerPoint([polygon.outline.points[i].lat, polygon.outline.points[i].lng]);
+        ctx.lineTo(pt.x, pt.y);
+      }
+
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255, 165, 0, 0.1)";
+      // ctx.fill();
+      ctx.strokeStyle = "orange";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    if (polygon.holes) {
+      polygon.holes.forEach((hole) => {
+        if (!isBoundingBoxInView(hole.boundingBox, viewBox)) return;
+
+        if (hole.points.length === 0) return;
+        ctx.beginPath();
+        const start = map.latLngToContainerPoint([hole.points[0].lat, hole.points[0].lng]);
+        ctx.moveTo(start.x, start.y);
+
+        for (let i = 1; i < hole.points.length; i++) {
+          const pt = map.latLngToContainerPoint([hole.points[i].lat, hole.points[i].lng]);
+          ctx.lineTo(pt.x, pt.y);
+        }
+
+        ctx.closePath();
+        ctx.fillStyle = "rgba(255,255,255,1)";
+        // ctx.fill();
+        ctx.strokeStyle = "orange";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+    }
+  });
+
+  // ---- Draw trajectories ----
+  if (Object.keys(trajectories).length === 0) return;
+
+  trajectories[zoom]?.forEach((t) => {
     if (t.messages.length === 0) return;
     if (!isBoundingBoxInView(t.boundingBox, viewBox)) return;
 
-    // Convert to screen points
-    const pts = t.messages.map((p) => ({
-      x: map.latLngToContainerPoint([p.lat, p.lng]).x,
-      y: map.latLngToContainerPoint([p.lat, p.lng]).y,
-    }));
+    const pts = t.messages.map((p) => {
+      const pt = map.latLngToContainerPoint([p.point.lat, p.point.lng]);
+      return { x: pt.x, y: pt.y };
+    });
 
-    // Draw trajectory line
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for (let i = 1; i < pts.length; i++) {
       ctx.lineTo(pts[i].x, pts[i].y);
     }
     ctx.strokeStyle = "rgba(0,100,255,0.8)";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     ctx.stroke();
 
     // Draw start/end markers
-    const start = pts[0];
-    const end = pts[pts.length - 1];
-
+    const radius = 3;
     ctx.fillStyle = "green";
     ctx.beginPath();
-    ctx.arc(start.x, start.y, 6, 0, Math.PI * 2);
+    ctx.arc(pts[0].x, pts[0].y, radius, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = "red";
     ctx.beginPath();
-    ctx.arc(end.x, end.y, 6, 0, Math.PI * 2);
+    ctx.arc(pts[pts.length - 1].x, pts[pts.length - 1].y, radius, 0, Math.PI * 2);
     ctx.fill();
   });
 };

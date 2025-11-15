@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import MapWithCanvas from './components/MapWithCanvas';
-import { drawTrajectory } from './utils/draw';
+import { draw } from './utils/draw';
 import CanvasLayer from './components/CanvasLayer';
 import { parseTrajectory } from './utils/parse';
 import type { TrajectoriesByZoom } from './types/TrajectoriesByZoom';
-import { prepareTrajectories } from './utils/prepare';
+import { prepareEecPolygons, prepareTrajectories } from './utils/prepare';
+import type { Polygon } from './types/Polygon';
+import eecData from './assets/eec.json';
+
+const polygons: Polygon[] = prepareEecPolygons(eecData.features[0].geometry.coordinates);
 
 function App() {
   const [trajectories, setTrajectories] = useState<TrajectoriesByZoom>({});
@@ -29,7 +33,7 @@ function App() {
   return (
     <div style={{ width: '100%', height: '100vh' }}>
       <MapWithCanvas>
-        <CanvasLayer drawMethod={(info) => drawTrajectory(trajectories, info)} />
+        <CanvasLayer drawMethod={(info) => draw(trajectories, polygons, info)} />
       </ MapWithCanvas>
     </div>
   );

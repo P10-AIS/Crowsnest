@@ -18,14 +18,15 @@ type RawTrajectory = Array<RawPoint>
 export function parseTrajectory(data: RawTrajectory[]): Trajectory[] {
     return data.map((traj, idx) => {
         const messages = traj.map((pt) => ({
-            lat: pt[0],
-            lng: pt[1],
+            point: { lat: pt[0], lng: pt[1] },
             heading: pt[5],
         }));
 
+        const points = messages.map(msg => msg.point);
+
         return {
             id: idx,
-            boundingBox: getBoundingBox(messages),
+            boundingBox: getBoundingBox(points),
             messages,
         };
     })
