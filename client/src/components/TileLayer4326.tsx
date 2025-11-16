@@ -7,13 +7,18 @@ function TileLayer4326() {
 
     useEffect(() => {
         const wmsOptions: L.WMSOptions = {
-            noWrap: true,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            layers: 'world',
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.1',
+            attribution: '© Omniscale',
         };
 
-        const url = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+        // const wmsUrl = 'https://maps.omniscale.net/v2/trajviz-1f42b4b3/style.grayscale/map?';
+        const wmsUrl = 'https://maps.omniscale.net/v2/trajviz-1f42b4b3/style.default/map?';
 
-        const layer = L.tileLayer(url, wmsOptions);
+
+        const layer = L.tileLayer.wms(wmsUrl, wmsOptions);
 
         map.addLayer(layer);
 
