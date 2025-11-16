@@ -6,8 +6,8 @@ import SettingsPanel from './components/SettingsPanel';
 import { useAppContext } from './contexts/AppContext';
 import DataLoader from './components/DataLoader';
 import TileLayer3034 from './components/TileLayer3034';
-import Map4326 from './components/Map4326';
-import TileLayer4326 from './components/TileLayer4326';
+import Map3857 from './components/Map3857';
+import TileLayer3857 from './components/TileLayer3857';
 
 function App() {
   const ctx = useAppContext();
@@ -25,14 +25,14 @@ function App() {
               {ctx.trajectoriesVisible && <CanvasLayer drawMethod={(info) => drawTrajectories(ctx.trajectories, ctx.numTrajectoriesVisible, ctx.fullTrajectoryFidelity, info)} />}
             </>
           </ Map3034>) : (
-          <Map4326>
+          <Map3857>
             <>
-              {ctx.showMapTiles && <TileLayer4326 />}
+              {ctx.showMapTiles && <TileLayer3857 />}
               {ctx.showDepthImage && <CanvasLayer drawMethod={(info) => drawDepthImage(ctx.depthImage, ctx.depthImageOpacity, info)} />}
               {ctx.eecOutlineVisible && <CanvasLayer drawMethod={(info) => drawPolygons(ctx.polygons, info)} />}
               {ctx.trajectoriesVisible && <CanvasLayer drawMethod={(info) => drawTrajectories(ctx.trajectories, ctx.numTrajectoriesVisible, ctx.fullTrajectoryFidelity, info)} />}
             </>
-          </ Map4326>
+          </ Map3857>
         )}
       </DataLoader>
     </div>

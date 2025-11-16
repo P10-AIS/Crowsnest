@@ -2,7 +2,7 @@ import L from "leaflet";
 import { useMap } from "react-leaflet";
 import { useEffect } from "react";
 
-function TileLayer4326() {
+function TileLayer3857() {
     const map = useMap();
 
     useEffect(() => {
@@ -30,4 +30,4 @@ function TileLayer4326() {
     return null;
 }
 
-export default TileLayer4326;
+export default TileLayer3857;

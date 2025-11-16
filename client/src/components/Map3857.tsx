@@ -1,7 +1,7 @@
 import { MapContainer, ZoomControl } from "react-leaflet";
 import type { JSX } from "react";
 
-function Map4326({ children }: { children: JSX.Element }) {
+function Map3857({ children }: { children: JSX.Element }) {
     return (
         <MapContainer
             center={[56.15674, 10.21076]}
@@ -16,4 +16,4 @@ function Map4326({ children }: { children: JSX.Element }) {
     );
 }
 
-export default Map4326;
+export default Map3857;
