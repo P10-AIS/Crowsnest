@@ -9,11 +9,17 @@ services:
     command: /bin/sh -c "while sleep 1000; do :; done"
     networks:
       - TrajNet
+
   redis:
     image: redis:7
+    volumes:
+      - redis-data:/data
     networks:
       - TrajNet
 
 networks:
   TrajNet:
     driver: bridge
+
+volumes:
+  redis-data:
