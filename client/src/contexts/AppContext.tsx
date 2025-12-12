@@ -4,6 +4,7 @@ import type { ZoomLevels } from '../types/ZoomLevels';
 import type { Trajectory } from '../types/Trajectory';
 import type { GeoImage } from '../types/GeoImage';
 import type { PredictionStep } from '../types/Prediction';
+import { useLocalStorageState } from './LocalStorageState';
 
 interface AppContextType {
     trajectories: ZoomLevels<Trajectory[]>;
@@ -57,28 +58,29 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: JSX.Element }) => {
+    const [eezOutlineVisible, setEezOutlineVisible] = useLocalStorageState('eezOutlineVisible', true);
+    const [trajectoriesVisible, setTrajectoriesVisible] = useLocalStorageState('trajectoriesVisible', true);
+    const [fullTrajectoryFidelity, setFullTrajectoryFidelity] = useLocalStorageState('fullTrajectoryFidelity', false);
+    const [fullEezFidelity, setFullEezFidelity] = useLocalStorageState('fullEezFidelity', false);
+    const [showMapTiles, setShowMapTiles] = useLocalStorageState('showMapTiles', true);
+    const [showDepthImage, setShowDepthImage] = useLocalStorageState('showDepthImage', false);
+    const [showTrafficImage, setShowTrafficImage] = useLocalStorageState('showTrafficImage', false);
+    const [depthImageOpacity, setDepthImageOpacity] = useLocalStorageState('depthImageOpacity', 1);
+    const [trafficImageOpacity, setTrafficImageOpacity] = useLocalStorageState('trafficImageOpacity', 1);
+    const [showESPG3034, setShowESPG3034] = useLocalStorageState('showESPG3034', true);
+    const [showPredictionSteps, setShowPredictionSteps] = useLocalStorageState('showPredictionSteps', false);
+    const [fullPredictionFidelity, setFullPredictionFidelity] = useLocalStorageState('fullPredictionFidelity', false);
+    const [enableShipSizeGuide, setEnableShipSizeGuide] = useLocalStorageState('enableShipSizeGuide', false);
+
     const [trajectories, setTrajectories] = useState<ZoomLevels<Trajectory[]>>([]);
-    const [polygons, setPolygons] = useState<ZoomLevels<Polygon[]>>([]);
-    const [eezOutlineVisible, setEezOutlineVisible] = useState(true);
-    const [trajectoriesVisible, setTrajectoriesVisible] = useState(true);
     const [numTrajectoriesVisible, setNumTrajectoriesVisible] = useState(0);
-    const [fullTrajectoryFidelity, setFullTrajectoryFidelity] = useState(false);
-    const [fullEezFidelity, setFullEezFidelity] = useState(false);
+    const [polygons, setPolygons] = useState<ZoomLevels<Polygon[]>>([]);
     const [depthImage3034, setDepthImage3034] = useState<GeoImage | null>(null);
     const [depthImage3857, setDepthImage3857] = useState<GeoImage | null>(null);
     const [trafficImage3034, setTrafficImage3034] = useState<GeoImage | null>(null);
     const [trafficImage3857, setTrafficImage3857] = useState<GeoImage | null>(null);
-    const [showMapTiles, setShowMapTiles] = useState(true);
-    const [showDepthImage, setShowDepthImage] = useState(false);
-    const [showTrafficImage, setShowTrafficImage] = useState(false);
-    const [depthImageOpacity, setDepthImageOpacity] = useState(1);
-    const [trafficImageOpacity, setTrafficImageOpacity] = useState(1);
-    const [showESPG3034, setShowESPG3034] = useState(true);
-    const [showPredictionSteps, setShowPredictionSteps] = useState(false);
     const [predictionSteps, setPredictionSteps] = useState<ZoomLevels<PredictionStep>[]>([]);
     const [currentPredictionStep, setCurrentPredictionStep] = useState(0);
-    const [fullPredictionFidelity, setFullPredictionFidelity] = useState(false);
-    const [enableShipSizeGuide, setEnableShipSizeGuide] = useState(false);
     const [shipSizeGuideImage, setShipSizeGuideImage] = useState<HTMLImageElement | null>(null);
 
     const value: AppContextType = {
