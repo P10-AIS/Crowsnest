@@ -4,6 +4,7 @@ import { parsePredictionSteps, parseTrajectory } from "../utils/parse";
 import { prepareEezPolygons, preparePredictions, prepareTrajectories } from "../utils/prepare";
 import eezData from '../assets/eez.json';
 import type { GeoImage } from "../types/GeoImage";
+import shipPng from "../assets/boat.png";
 
 
 async function fetchMapImage(imageName: string): Promise<GeoImage> {
@@ -99,6 +100,14 @@ function DataLoader({ children }: { children: JSX.Element }) {
             }
         };
         fetchLatestPredictions()
+    }, []);
+
+    useEffect(() => {
+        const img = new Image();
+        img.src = shipPng;
+        img.onload = () => {
+            ctx.setShipSizeGuideImage(img);
+        };
     }, []);
 
     return children;

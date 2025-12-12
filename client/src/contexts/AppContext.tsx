@@ -48,6 +48,10 @@ interface AppContextType {
     setCurrentPredictionStep: (step: number) => void;
     fullPredictionFidelity: boolean;
     setFullPredictionFidelity: (fidelity: boolean) => void;
+    enableShipSizeGuide: boolean;
+    setEnableShipSizeGuide: (enable: boolean) => void;
+    shipSizeGuideImage: HTMLImageElement | null;
+    setShipSizeGuideImage: (image: HTMLImageElement | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -74,6 +78,8 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [predictionSteps, setPredictionSteps] = useState<ZoomLevels<PredictionStep>[]>([]);
     const [currentPredictionStep, setCurrentPredictionStep] = useState(0);
     const [fullPredictionFidelity, setFullPredictionFidelity] = useState(false);
+    const [enableShipSizeGuide, setEnableShipSizeGuide] = useState(false);
+    const [shipSizeGuideImage, setShipSizeGuideImage] = useState<HTMLImageElement | null>(null);
 
     const value: AppContextType = {
         trajectories,
@@ -118,6 +124,10 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
         setCurrentPredictionStep,
         fullPredictionFidelity,
         setFullPredictionFidelity,
+        enableShipSizeGuide,
+        setEnableShipSizeGuide,
+        shipSizeGuideImage,
+        setShipSizeGuideImage,
     };
 
     return (

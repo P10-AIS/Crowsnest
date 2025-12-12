@@ -17,7 +17,7 @@ function TileLayer3034() {
         };
 
         // const wmsUrl = 'https://maps.omniscale.net/v2/trajviz-1f42b4b3/style.grayscale/map?';
-        const wmsUrl = 'https://maps.omniscale.net/v2/trajviz-1f42b4b3/style.default/map?';
+        const wmsUrl = 'https://maps.omniscale.net/v2/p9-1daf4e6b/style.default/map?';
 
 
         const layer = L.tileLayer.wms(wmsUrl, wmsOptions);

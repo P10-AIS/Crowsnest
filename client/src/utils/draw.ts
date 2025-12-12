@@ -69,10 +69,12 @@ export const drawTrajectories = (
 }
 
 export function drawPredictions(
-  predictionStep: ZoomLevels<PredictionStep>,
+  predictionStep: ZoomLevels<PredictionStep> | undefined,
   fullFidelity: boolean,
   info: DrawInfo
 ) {
+  if (!predictionStep) return;
+
   const { map, canvas } = info;
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -281,3 +283,55 @@ export const drawGeoImage = (
     height
   );
 };
+
+
+export function drawShipCursor(info: DrawInfo, shipImage: HTMLImageElement | null) {
+  if (!shipImage) return;
+
+  const { map, canvas } = info;
+  const ctx = canvas.getContext("2d")!;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const center = map.getCenter();
+  const centerPoint = map.latLngToContainerPoint(center);
+
+  const pixelLength = metersToPixels(map, 20);
+
+  // Maintain aspect ratio
+  const aspect = shipImage.width / shipImage.height;
+  const width = pixelLength;
+  const height = pixelLength / aspect;
+
+  // Draw centered
+  ctx.save();
+
+  ctx.translate(centerPoint.x, centerPoint.y);
+
+
+  ctx.drawImage(
+    shipImage,
+    -width / 2,
+    -height / 2,
+    width,
+    height
+  );
+
+  ctx.restore();
+}
+
+
+function metersToPixels(map: L.Map, meters: number): number {
+  const center = map.getCenter();
+
+  // Move the center by X meters north
+  const earthRadius = 6378137;
+  const dLat = (meters / earthRadius) * (180 / Math.PI);
+
+  const pointA = map.latLngToContainerPoint(center);
+  const pointB = map.latLngToContainerPoint({
+    lat: center.lat + dLat,
+    lng: center.lng,
+  });
+
+  return Math.abs(pointA.y - pointB.y);
+}

@@ -91,6 +91,16 @@ function SettingsPanel() {
                             />
                         </div>
 
+                        {/* Enable Cursor Ship toggle */}
+                        <div className="flex flex-row items-center justify-between">
+                            <div>Enable ship size guide</div>
+                            <input
+                                type="checkbox"
+                                checked={ctx.enableShipSizeGuide}
+                                onChange={(e) => ctx.setEnableShipSizeGuide(e.target.checked)}
+                            />
+                        </div>
+
                         {/* num trajectories slider */}
                         <div className="flex flex-col">
                             <div className="flex flex-row justify-between">
