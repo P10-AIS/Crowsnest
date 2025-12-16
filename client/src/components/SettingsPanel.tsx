@@ -51,6 +51,18 @@ function SettingsPanel() {
                             />
                         </div>
 
+                        {/* Enable Cursor Ship toggle */}
+                        <div className="flex flex-row items-center justify-between">
+                            <div>Enable ship size guide</div>
+                            <input
+                                type="checkbox"
+                                checked={ctx.enableShipSizeGuide}
+                                onChange={(e) => ctx.setEnableShipSizeGuide(e.target.checked)}
+                            />
+                        </div>
+
+                        <hr className="border-slate-300"></hr>
+
                         {/* eez toggle */}
                         <div className="flex flex-row items-center justify-between">
                             <div>Show EEZ</div>
@@ -60,6 +72,18 @@ function SettingsPanel() {
                                 onChange={(e) => ctx.setEezOutlineVisible(e.target.checked)}
                             />
                         </div>
+
+                        {/* full eez fidelity toggle */}
+                        <div className="flex flex-row items-center justify-between">
+                            <div>Full EEZ Fidelity</div>
+                            <input
+                                type="checkbox"
+                                checked={ctx.fullEezFidelity}
+                                onChange={(e) => ctx.setFullEezFidelity(e.target.checked)}
+                            />
+                        </div>
+
+                        <hr className="border-slate-300"></hr>
 
                         {/* trajectory toggle */}
                         <div className="flex flex-row items-center justify-between">
@@ -81,26 +105,6 @@ function SettingsPanel() {
                             />
                         </div>
 
-                        {/* full eez fidelity toggle */}
-                        <div className="flex flex-row items-center justify-between">
-                            <div>Full EEZ Fidelity</div>
-                            <input
-                                type="checkbox"
-                                checked={ctx.fullEezFidelity}
-                                onChange={(e) => ctx.setFullEezFidelity(e.target.checked)}
-                            />
-                        </div>
-
-                        {/* Enable Cursor Ship toggle */}
-                        <div className="flex flex-row items-center justify-between">
-                            <div>Enable ship size guide</div>
-                            <input
-                                type="checkbox"
-                                checked={ctx.enableShipSizeGuide}
-                                onChange={(e) => ctx.setEnableShipSizeGuide(e.target.checked)}
-                            />
-                        </div>
-
                         {/* num trajectories slider */}
                         <div className="flex flex-col">
                             <div className="flex flex-row justify-between">
@@ -116,15 +120,7 @@ function SettingsPanel() {
                             />
                         </div>
 
-                        {/* show prediction toggle */}
-                        <div className="flex flex-row items-center justify-between">
-                            <div>Show Predictions</div>
-                            <input
-                                type="checkbox"
-                                checked={ctx.showPredictionSteps}
-                                onChange={(e) => ctx.setShowPredictionSteps(e.target.checked)}
-                            />
-                        </div>
+                        <hr className="border-slate-300"></hr>
 
                         {/* full prediction fidelity toggle */}
                         <div className="flex flex-row items-center justify-between">
@@ -136,20 +132,25 @@ function SettingsPanel() {
                             />
                         </div>
 
-                        {/* current prediction step slider */}
-                        <div className="flex flex-col">
-                            <div className="flex flex-row justify-between">
-                                <div>Current Prediction Step: </div>
-                                <div>{ctx.currentPredictionStep + 1} / {ctx.predictionSteps.length}</div>
-                            </div>
-                            <input
-                                type="range"
-                                min={0}
-                                max={ctx.predictionSteps.length - 1}
-                                value={ctx.currentPredictionStep}
-                                onChange={(e) => ctx.setCurrentPredictionStep(parseInt(e.target.value))}
-                            />
+                        {/* show prediction toggles */}
+                        <div>Toggle Model Predictions:</div>
+                        <div className="p-2 bg-gray-200 rounded">
+                            {Object.keys(ctx.modelPredictions).map((modelName) => (
+                                <div key={modelName} className="flex flex-row items-center justify-between">
+                                    <div>{modelName}</div>
+                                    <input
+                                        type="checkbox"
+                                        checked={ctx.showModelPredictions[modelName] || false}
+                                        onChange={(e) => ctx.setShowModelPredictions({
+                                            ...ctx.showModelPredictions,
+                                            [modelName]: e.target.checked
+                                        })}
+                                    />
+                                </div>
+                            ))}
                         </div>
+
+                        <hr className="border-slate-300"></hr>
 
                         {/* show depth image toggle */}
                         <div className="flex flex-row items-center justify-between">

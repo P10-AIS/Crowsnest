@@ -12,34 +12,31 @@ import TileLayer3857 from './components/TileLayer3857';
 function App() {
   const ctx = useAppContext();
 
+  const MapComponent = ctx.showESPG3034 ? Map3034 : Map3857;
+  const TileLayerComponent = ctx.showESPG3034 ? TileLayer3034 : TileLayer3857;
+  const depthImage = ctx.showESPG3034 ? ctx.depthImage3034 : ctx.depthImage3857;
+  const trafficImage = ctx.showESPG3034 ? ctx.trafficImage3034 : ctx.trafficImage3857;
+
   return (
     <div style={{ width: '100%', height: '100vh' }}>
       <SettingsPanel />
       <DataLoader >
-        {ctx.showESPG3034 ? (
-          <Map3034>
-            <>
-              {ctx.showMapTiles && <TileLayer3034 />}
-              {ctx.showDepthImage && <CanvasLayer zIndex={1} drawMethod={(info) => drawGeoImage(ctx.depthImage3034, ctx.depthImageOpacity, info)} />}
-              {ctx.showTrafficImage && <CanvasLayer zIndex={2} drawMethod={(info) => drawGeoImage(ctx.trafficImage3034, ctx.trafficImageOpacity, info)} />}
-              {ctx.eezOutlineVisible && <CanvasLayer zIndex={3} drawMethod={(info) => drawPolygons(ctx.polygons, ctx.fullEezFidelity, info)} />}
-              {ctx.trajectoriesVisible && <CanvasLayer zIndex={4} drawMethod={(info) => drawTrajectories(ctx.trajectories, ctx.numTrajectoriesVisible, ctx.fullTrajectoryFidelity, info)} />}
-              {ctx.showPredictionSteps && <CanvasLayer zIndex={5} drawMethod={(info) => drawPredictions(ctx.predictionSteps[ctx.currentPredictionStep], ctx.fullPredictionFidelity, info)} />}
-              {ctx.enableShipSizeGuide && <CanvasLayer zIndex={6} drawMethod={(info) => drawShipCursor(info, ctx.shipSizeGuideImage)} />}
-            </>
-          </ Map3034>) : (
-          <Map3857>
-            <>
-              {ctx.showMapTiles && <TileLayer3857 />}
-              {ctx.showDepthImage && <CanvasLayer zIndex={1} drawMethod={(info) => drawGeoImage(ctx.depthImage3857, ctx.depthImageOpacity, info)} />}
-              {ctx.showTrafficImage && <CanvasLayer zIndex={2} drawMethod={(info) => drawGeoImage(ctx.trafficImage3857, ctx.trafficImageOpacity, info)} />}
-              {ctx.eezOutlineVisible && <CanvasLayer zIndex={3} drawMethod={(info) => drawPolygons(ctx.polygons, ctx.fullEezFidelity, info)} />}
-              {ctx.trajectoriesVisible && <CanvasLayer zIndex={4} drawMethod={(info) => drawTrajectories(ctx.trajectories, ctx.numTrajectoriesVisible, ctx.fullTrajectoryFidelity, info)} />}
-              {ctx.showPredictionSteps && <CanvasLayer zIndex={5} drawMethod={(info) => drawPredictions(ctx.predictionSteps[ctx.currentPredictionStep], ctx.fullPredictionFidelity, info)} />}
-              {ctx.enableShipSizeGuide && <CanvasLayer zIndex={6} drawMethod={(info) => drawShipCursor(info, ctx.shipSizeGuideImage)} />}
-            </>
-          </ Map3857>
-        )}
+        <MapComponent>
+          <>
+            {ctx.showMapTiles && <TileLayerComponent />}
+            {ctx.showDepthImage && <CanvasLayer zIndex={1} drawMethod={(info) => drawGeoImage(depthImage, ctx.depthImageOpacity, info)} />}
+            {ctx.showTrafficImage && <CanvasLayer zIndex={2} drawMethod={(info) => drawGeoImage(trafficImage, ctx.trafficImageOpacity, info)} />}
+            {ctx.eezOutlineVisible && <CanvasLayer zIndex={3} drawMethod={(info) => drawPolygons(ctx.polygons, ctx.fullEezFidelity, info)} />}
+            {ctx.trajectoriesVisible && <CanvasLayer zIndex={4} drawMethod={(info) => drawTrajectories(ctx.trajectories, ctx.numTrajectoriesVisible, ctx.fullTrajectoryFidelity, info)} />}
+
+            {Object.entries(ctx.modelPredictions).map(([modelName, predictions]) => (
+              ctx.showModelPredictions[modelName] &&
+              <CanvasLayer key={modelName} zIndex={5} drawMethod={(info) => drawPredictions(predictions, ctx.fullPredictionFidelity, info)} />
+            ))}
+
+            {ctx.enableShipSizeGuide && <CanvasLayer zIndex={6} drawMethod={(info) => drawShipCursor(info, ctx.shipSizeGuideImage)} />}
+          </>
+        </ MapComponent>
       </DataLoader>
     </div>
   );

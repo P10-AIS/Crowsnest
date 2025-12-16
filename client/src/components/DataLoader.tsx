@@ -1,6 +1,6 @@
 import { useEffect, type JSX } from "react";
 import { useAppContext } from "../contexts/AppContext";
-import { parsePredictionSteps, parseTrajectory } from "../utils/parse";
+import { parsePredictions, parseTrajectory } from "../utils/parse";
 import { prepareEezPolygons, preparePredictions, prepareTrajectories } from "../utils/prepare";
 import eezData from '../assets/eez.json';
 import type { GeoImage } from "../types/GeoImage";
@@ -87,19 +87,23 @@ function DataLoader({ children }: { children: JSX.Element }) {
     }, []);
 
     useEffect(() => {
-        const fetchLatestPredictions = async () => {
+        const models = ['lerp']
+
+        const fetchLatestPredictions = async (modelName: string) => {
             try {
-                const response = await fetch('http://localhost:4000/predictions');
+                const response = await fetch('http://localhost:4000/predictions/' + modelName);
                 const data = await response.json();
-                const parsed = parsePredictionSteps(data);
+                const parsed = parsePredictions(data);
                 const zoomed = preparePredictions(parsed);
-                ctx.setPredictionSteps(zoomed);
-                ctx.setCurrentPredictionStep(parsed.length - 1);
+                ctx.setModelPredictions((prev) => ({ ...prev, [modelName]: zoomed }));
             } catch (err) {
                 console.error('Failed to fetch trajectory:', err);
             }
         };
-        fetchLatestPredictions()
+
+        for (const model of models) {
+            fetchLatestPredictions(model)
+        }
     }, []);
 
     useEffect(() => {

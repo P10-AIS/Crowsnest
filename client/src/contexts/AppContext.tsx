@@ -3,7 +3,7 @@ import type { Polygon } from '../types/Polygon';
 import type { ZoomLevels } from '../types/ZoomLevels';
 import type { Trajectory } from '../types/Trajectory';
 import type { GeoImage } from '../types/GeoImage';
-import type { PredictionStep } from '../types/Prediction';
+import type { Prediction, PredictionStep } from '../types/Prediction';
 import { useLocalStorageState } from './LocalStorageState';
 
 interface AppContextType {
@@ -41,12 +41,10 @@ interface AppContextType {
     setTrafficImageOpacity: (opacity: number) => void;
     showESPG3034: boolean;
     setShowESPG3034: (show: boolean) => void;
-    showPredictionSteps: boolean;
-    setShowPredictionSteps: (show: boolean) => void;
-    predictionSteps: ZoomLevels<PredictionStep>[];
-    setPredictionSteps: (steps: ZoomLevels<PredictionStep>[]) => void;
-    currentPredictionStep: number;
-    setCurrentPredictionStep: (step: number) => void;
+    showModelPredictions: Record<string, boolean>;
+    setShowModelPredictions: (show: Record<string, boolean>) => void;
+    modelPredictions: Record<string, ZoomLevels<Prediction[]>>;
+    setModelPredictions: React.Dispatch<React.SetStateAction<Record<string, ZoomLevels<Prediction[]>>>>;
     fullPredictionFidelity: boolean;
     setFullPredictionFidelity: (fidelity: boolean) => void;
     enableShipSizeGuide: boolean;
@@ -68,8 +66,8 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [depthImageOpacity, setDepthImageOpacity] = useLocalStorageState('depthImageOpacity', 1);
     const [trafficImageOpacity, setTrafficImageOpacity] = useLocalStorageState('trafficImageOpacity', 1);
     const [showESPG3034, setShowESPG3034] = useLocalStorageState('showESPG3034', true);
-    const [showPredictionSteps, setShowPredictionSteps] = useLocalStorageState('showPredictionSteps', false);
     const [fullPredictionFidelity, setFullPredictionFidelity] = useLocalStorageState('fullPredictionFidelity', false);
+    const [showModelPredictions, setShowModelPredictions] = useLocalStorageState<Record<string, boolean>>('showModelPredictions', {});
     const [enableShipSizeGuide, setEnableShipSizeGuide] = useLocalStorageState('enableShipSizeGuide', false);
 
     const [trajectories, setTrajectories] = useState<ZoomLevels<Trajectory[]>>([]);
@@ -79,8 +77,7 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [depthImage3857, setDepthImage3857] = useState<GeoImage | null>(null);
     const [trafficImage3034, setTrafficImage3034] = useState<GeoImage | null>(null);
     const [trafficImage3857, setTrafficImage3857] = useState<GeoImage | null>(null);
-    const [predictionSteps, setPredictionSteps] = useState<ZoomLevels<PredictionStep>[]>([]);
-    const [currentPredictionStep, setCurrentPredictionStep] = useState(0);
+    const [modelPredictions, setModelPredictions] = useState<Record<string, ZoomLevels<Prediction[]>>>({});
     const [shipSizeGuideImage, setShipSizeGuideImage] = useState<HTMLImageElement | null>(null);
 
     const value: AppContextType = {
@@ -118,12 +115,10 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
         setTrafficImageOpacity,
         showESPG3034,
         setShowESPG3034,
-        showPredictionSteps,
-        setShowPredictionSteps,
-        predictionSteps,
-        setPredictionSteps,
-        currentPredictionStep,
-        setCurrentPredictionStep,
+        showModelPredictions,
+        setShowModelPredictions,
+        modelPredictions,
+        setModelPredictions,
         fullPredictionFidelity,
         setFullPredictionFidelity,
         enableShipSizeGuide,

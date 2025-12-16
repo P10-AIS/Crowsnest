@@ -1,4 +1,4 @@
-import type { PredictionStep } from "../types/Prediction";
+import type { Prediction } from "../types/Prediction";
 import type { Trajectory } from "../types/Trajectory";
 import { getBoundingBox } from "./bounds";
 
@@ -15,10 +15,9 @@ import { getBoundingBox } from "./bounds";
 
 type RawPoint = Array<number>
 type RawTrajectory = Array<RawPoint>
-type RawPredictionStep = {
-    step: number;
+type RawPredictions = {
     predictions: number[][][];
-};
+}
 
 export function parseTrajectory(data: RawTrajectory[]): Trajectory[] {
     return data.map((traj, idx) => {
@@ -37,26 +36,22 @@ export function parseTrajectory(data: RawTrajectory[]): Trajectory[] {
     })
 }
 
-export function parsePredictionSteps(data: RawPredictionStep[]): PredictionStep[] {
-    return data.map((predStep) => parsePredictionStep(predStep));
-}
-
-function parsePredictionStep(data: RawPredictionStep): PredictionStep {
-
-    const step = data.step;
-
+export function parsePredictions(data: RawPredictions): Prediction[] {
     const predictions = data.predictions.map((pred, idx) => {
+        const masks = pred.map(pt => pt[0] === 1);
+
         const predictedPoints = pred.map(pt => ({
-            lat: pt[0],
-            lng: pt[1],
+            lat: pt[1],
+            lng: pt[2],
         }));
         const truePoints = pred.map(pt => ({
-            lat: pt[2],
-            lng: pt[3],
+            lat: pt[3],
+            lng: pt[4],
         }));
 
         return {
             trajectoryId: idx,
+            masks,
             predictedPoints,
             truePoints,
             boundingBoxPredicted: getBoundingBox(predictedPoints),
@@ -64,9 +59,6 @@ function parsePredictionStep(data: RawPredictionStep): PredictionStep {
         };
     });
 
-    return {
-        step,
-        predictions,
-    };
+    return predictions;
 }
 

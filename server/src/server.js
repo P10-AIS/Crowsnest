@@ -89,25 +89,16 @@ app.get('/predictions/:model', async (req, res) => {
   try {
     const { model } = req.params
 
-    const keys = await redis.keys(`${PREDICTION_KEY}:${model}:*`)
-    keys.sort((a, b) => {
-      const sa = parseInt(a.split(':').pop())
-      const sb = parseInt(b.split(':').pop())
-      return sa - sb
-    })
+    const key = `${PREDICTION_KEY}:${model}`
 
-    const results = []
+    const base64 = await redis.get(key)
+    if (!base64) return res.json([])
 
-    for (const key of keys) {
-      const base64 = await redis.get(key)
-      if (!base64) continue
+    const buf = Buffer.from(base64, 'base64')
+    const decoded = zlib.gunzipSync(buf)
+    const json = JSON.parse(decoded.toString())
 
-      const buf = Buffer.from(base64, 'base64')
-      const decoded = zlib.gunzipSync(buf)
-      results.push(JSON.parse(decoded.toString()))
-    }
-
-    res.json(results)
+    res.json(json)
   } catch (err) {
     console.error('Error reading predictions:', err)
     res.status(500).json({ error: 'Failed to read predictions' })
@@ -118,10 +109,8 @@ app.post('/predictions/:model/reset', async (req, res) => {
   try {
     const { model } = req.params
 
-    const keys = await redis.keys(`${PREDICTION_KEY}:${model}:*`)
-    if (keys.length > 0) {
-      await redis.del(...keys)
-    }
+    const key = `${PREDICTION_KEY}:${model}`
+    await redis.del(key)
 
     res.json({ status: 'model_predictions_removed', model })
   } catch (err) {

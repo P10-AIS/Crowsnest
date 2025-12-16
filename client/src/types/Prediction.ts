@@ -4,13 +4,9 @@ import type { Point } from "./Point";
 
 export type Prediction = {
     trajectoryId: number;
+    masks: boolean[];
     truePoints: Point[];
     predictedPoints: Point[];
     boundingBoxPredicted: Bound;
     boundingBoxTrue: Bound;
-};
-
-export type PredictionStep = {
-    step: number;
-    predictions: Prediction[];
 };

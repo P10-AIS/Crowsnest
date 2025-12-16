@@ -2,7 +2,7 @@ import type { Polygon } from "../types/Polygon";
 import type { ZoomLevels } from "../types/ZoomLevels";
 import type { Trajectory } from "../types/Trajectory";
 import { getBoundingBox } from "./bounds";
-import type { PredictionStep } from "../types/Prediction";
+import type { Prediction } from "../types/Prediction";
 
 export function prepareTrajectories(trajectories: Trajectory[]): ZoomLevels<Trajectory[]> {
 
@@ -94,46 +94,41 @@ export function prepareEezPolygons(rawCoordinates: number[][][][]): ZoomLevels<P
     return polygonsByZoom;
 }
 
-export function preparePredictions(predictionsSteps: PredictionStep[]): ZoomLevels<PredictionStep>[] {
+export function preparePredictions(predictions: Prediction[]): ZoomLevels<Prediction[]> {
     const minZoom = 3;
     const maxZoom = 9;
 
     const minStep = 1;
     const maxStep = 600;
 
-    const zooms = predictionsSteps.map((predictionStep) => {
-        const predictionsByZoom: ZoomLevels<PredictionStep> = [];
+    const predictionsByZoom: ZoomLevels<Prediction[]> = [];
 
-        for (let zoom = 1; zoom <= 18; zoom++) {
-            const step = maxStep - ((zoom - minZoom) / (maxZoom - minZoom)) * (maxStep - minStep);
-            const stepInt = Math.max(1, Math.round(step));
+    for (let zoom = 1; zoom <= 18; zoom++) {
+        const step = maxStep - ((zoom - minZoom) / (maxZoom - minZoom)) * (maxStep - minStep);
+        const stepInt = Math.max(1, Math.round(step));
 
-            const predictions = predictionStep.predictions.map((pred) => {
-                const simplifiedPreds = simplify(pred.predictedPoints, stepInt);
-                const simplifiedTruths = simplify(pred.truePoints, stepInt);
-                const trajectoryId = pred.trajectoryId;
-                const boundingBoxPredicted = getBoundingBox(simplifiedPreds);
-                const boundingBoxTrue = getBoundingBox(simplifiedTruths);
+        const predictionsZoomed = predictions.map((pred) => {
+            const simplifiedMasks = simplify(pred.masks, stepInt);
+            const simplifiedPreds = simplify(pred.predictedPoints, stepInt);
+            const simplifiedTruths = simplify(pred.truePoints, stepInt);
+            const trajectoryId = pred.trajectoryId;
+            const boundingBoxPredicted = getBoundingBox(simplifiedPreds);
+            const boundingBoxTrue = getBoundingBox(simplifiedTruths);
 
-                return {
-                    trajectoryId,
-                    predictedPoints: simplifiedPreds,
-                    truePoints: simplifiedTruths,
-                    boundingBoxPredicted,
-                    boundingBoxTrue
-                };
-            });
+            return {
+                trajectoryId,
+                masks: simplifiedMasks,
+                predictedPoints: simplifiedPreds,
+                truePoints: simplifiedTruths,
+                boundingBoxPredicted,
+                boundingBoxTrue
+            };
+        });
 
-            predictionsByZoom[zoom] = {
-                step: predictionStep.step,
-                predictions,
-            }
-        }
-        return predictionsByZoom;
+        predictionsByZoom[zoom] = predictionsZoomed
     }
-    );
 
-    return zooms;
+    return predictionsByZoom;
 }
 
 
