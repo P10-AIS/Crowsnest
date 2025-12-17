@@ -51,6 +51,12 @@ interface AppContextType {
     setEnableShipSizeGuide: (enable: boolean) => void;
     shipSizeGuideImage: HTMLImageElement | null;
     setShipSizeGuideImage: (image: HTMLImageElement | null) => void;
+    showTrajectoryDots: boolean;
+    setShowTrajectoryDots: (show: boolean) => void;
+    showPredictionDots: boolean;
+    setShowPredictionDots: (show: boolean) => void;
+    showPredictionCorrectionLines: boolean;
+    setShowPredictionCorrectionLines: (show: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -69,6 +75,9 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [fullPredictionFidelity, setFullPredictionFidelity] = useLocalStorageState('fullPredictionFidelity', false);
     const [showModelPredictions, setShowModelPredictions] = useLocalStorageState<Record<string, boolean>>('showModelPredictions', {});
     const [enableShipSizeGuide, setEnableShipSizeGuide] = useLocalStorageState('enableShipSizeGuide', false);
+    const [showTrajectoryDots, setShowTrajectoryDots] = useLocalStorageState('showTrajectoryDots', true);
+    const [showPredictionDots, setShowPredictionDots] = useLocalStorageState('showPredictionDots', true);
+    const [showPredictionCorrectionLines, setShowPredictionCorrectionLines] = useLocalStorageState('showPredictionCorrectionLines', true);
 
     const [trajectories, setTrajectories] = useState<ZoomLevels<Trajectory[]>>([]);
     const [numTrajectoriesVisible, setNumTrajectoriesVisible] = useState(0);
@@ -125,6 +134,12 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
         setEnableShipSizeGuide,
         shipSizeGuideImage,
         setShipSizeGuideImage,
+        showTrajectoryDots,
+        setShowTrajectoryDots,
+        showPredictionDots,
+        setShowPredictionDots,
+        showPredictionCorrectionLines,
+        setShowPredictionCorrectionLines,
     };
 
     return (

@@ -92,8 +92,6 @@ function DataLoader({ children }: { children: JSX.Element }) {
                 const modelRes = await fetch('http://localhost:4000/predictions');
                 const { models } = await modelRes.json();
 
-                console.log('Available models:', models);
-
                 for (const model of models) {
                     const response = await fetch(
                         `http://localhost:4000/predictions/${model}`

@@ -9,16 +9,15 @@ import type { ZoomLevels } from "../types/ZoomLevels";
 // ------------------- Global Config -------------------
 export const DrawConfig = {
   colors: {
-    predicted: "rgba(0,100,255,0.8)",
+    true: "rgba(0,100,255)",
     masked: "rgba(255,0,0)",
     truePoints: "rgba(0,100,255)",
-    truePredictedLine: "rgba(0,0,0,0.4)",
+    truePredictedLine: "black",
     polygonStroke: "orange",
-    polygonFill: "rgba(255,165,0,0.1)",
-    holeFill: "rgba(255,255,255,1)",
     start: "green",
     end: "red",
   },
+  dotsZoom: 13,    // Zoom level to start drawing points
   radiusScale: 3,        // Base radius for points
   lineWidthScale: 2,     // Base line width for lines
   dashPattern: [4, 4],   // For dashed lines
@@ -53,6 +52,7 @@ export const drawTrajectories = (
   trajectories: ZoomLevels<Trajectory[]>,
   maxTrajectories: number,
   fullTrajectoryFidelity: boolean,
+  showDots: boolean,
   info: DrawInfo
 ) => {
   const { map, canvas } = info;
@@ -85,16 +85,18 @@ export const drawTrajectories = (
     for (let i = 1; i < pts.length; i++) {
       ctx.lineTo(pts[i].x, pts[i].y);
     }
-    ctx.strokeStyle = DrawConfig.colors.predicted;
+    ctx.strokeStyle = DrawConfig.colors.true;
     ctx.lineWidth = DrawConfig.lineWidthScale;
     ctx.stroke();
 
     // Draw trajectory points
-    ctx.fillStyle = DrawConfig.colors.predicted;
-    for (let i = 0; i < pts.length; i++) {
-      ctx.beginPath();
-      ctx.arc(pts[i].x, pts[i].y, DrawConfig.radiusScale, 0, Math.PI * 2);
-      ctx.fill();
+    if (zoom >= DrawConfig.dotsZoom && showDots) {
+      ctx.fillStyle = DrawConfig.colors.true;
+      for (let i = 0; i < pts.length; i++) {
+        ctx.beginPath();
+        ctx.arc(pts[i].x, pts[i].y, DrawConfig.radiusScale, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     // Draw start and end points
@@ -114,6 +116,8 @@ export const drawTrajectories = (
 export function drawPredictions(
   predictionsByZoom: ZoomLevels<Prediction[]> | undefined,
   fullFidelity: boolean,
+  showDots: boolean,
+  showCorrectionLines: boolean,
   info: DrawInfo
 ) {
   if (!predictionsByZoom) return;
@@ -139,16 +143,38 @@ export function drawPredictions(
     if (!isBoundingBoxInView(t.boundingBoxPredicted, viewBox)) return;
     if (!isBoundingBoxInView(t.boundingBoxTrue, viewBox)) return;
 
-    // ---------------- Predicted Points ----------------
     const predPts = t.predictedPoints.map((p) => {
       const pt = map.latLngToContainerPoint([p.lat, p.lng]);
       return { x: pt.x, y: pt.y };
     });
 
+    const truePts = t.truePoints.map((p) => {
+      const pt = map.latLngToContainerPoint([p.lat, p.lng]);
+      return { x: pt.x, y: pt.y };
+    });
+
+    // ---------------- Dashed Lines Between True & Predicted ----------------
+    if (showCorrectionLines) {
+      ctx.strokeStyle = DrawConfig.colors.truePredictedLine;
+      ctx.lineWidth = DrawConfig.lineWidthScale * 0.7;
+      ctx.setLineDash(DrawConfig.dashPattern);
+
+      for (let i = 0; i < Math.min(truePts.length, predPts.length); i++) {
+        if (t.masks[i]) continue;
+        ctx.beginPath();
+        ctx.moveTo(truePts[i].x, truePts[i].y);
+        ctx.lineTo(predPts[i].x, predPts[i].y);
+        ctx.stroke();
+      }
+
+      ctx.setLineDash([]);
+    }
+
+    // ---- draw predicted lines ----
     for (let i = 1; i < predPts.length; i++) {
       const strokeStyle = !t.masks[i] || !t.masks[i - 1]
         ? DrawConfig.colors.masked
-        : DrawConfig.colors.predicted;
+        : DrawConfig.colors.true;
       ctx.strokeStyle = strokeStyle;
       ctx.lineWidth = DrawConfig.lineWidthScale;
 
@@ -159,41 +185,41 @@ export function drawPredictions(
     }
 
     // Draw masked points
-    ctx.fillStyle = DrawConfig.colors.masked;
-    for (let i = 0; i < predPts.length; i++) {
-      if (t.masks[i]) continue;
-      ctx.beginPath();
-      ctx.arc(predPts[i].x, predPts[i].y, DrawConfig.radiusScale, 0, Math.PI * 2);
-      ctx.fill();
+    if (zoom >= DrawConfig.dotsZoom && showDots) {
+      ctx.fillStyle = DrawConfig.colors.masked;
+      for (let i = 0; i < predPts.length; i++) {
+        if (t.masks[i]) continue;
+        ctx.beginPath();
+        ctx.arc(predPts[i].x, predPts[i].y, DrawConfig.radiusScale, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    // ---------------- True Points ----------------
-    const truePts = t.truePoints.map((p) => {
-      const pt = map.latLngToContainerPoint([p.lat, p.lng]);
-      return { x: pt.x, y: pt.y };
-    });
-
-    ctx.fillStyle = DrawConfig.colors.truePoints;
-    for (let i = 0; i < truePts.length; i++) {
-      ctx.beginPath();
-      ctx.arc(truePts[i].x, truePts[i].y, DrawConfig.radiusScale, 0, Math.PI * 2);
-      ctx.fill();
+    // ---- draw true lines ----
+    ctx.strokeStyle = DrawConfig.colors.truePoints;
+    ctx.lineWidth = DrawConfig.lineWidthScale;
+    ctx.beginPath();
+    ctx.moveTo(truePts[0].x, truePts[0].y);
+    for (let i = 1; i < truePts.length; i++) {
+      ctx.lineTo(truePts[i].x, truePts[i].y);
     }
+    ctx.stroke();
 
-    // ---------------- Dashed Lines Between True & Predicted ----------------
-    ctx.strokeStyle = DrawConfig.colors.truePredictedLine;
-    ctx.lineWidth = DrawConfig.lineWidthScale * 0.7;
-    ctx.setLineDash(DrawConfig.dashPattern);
-
-    for (let i = 0; i < Math.min(truePts.length, predPts.length); i++) {
-      if (t.masks[i]) continue;
-      ctx.beginPath();
-      ctx.moveTo(truePts[i].x, truePts[i].y);
-      ctx.lineTo(predPts[i].x, predPts[i].y);
-      ctx.stroke();
+    // ---- draw true points ----
+    if (zoom >= DrawConfig.dotsZoom && showDots) {
+      ctx.fillStyle = DrawConfig.colors.truePoints;
+      for (let i = 0; i < truePts.length; i++) {
+        ctx.beginPath();
+        ctx.arc(
+          truePts[i].x,
+          truePts[i].y,
+          DrawConfig.radiusScale,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      }
     }
-
-    ctx.setLineDash([]);
 
     // ---------------- Start/End Points ----------------
     const radius = DrawConfig.radiusScale;
@@ -243,8 +269,6 @@ export function drawPolygons(
       }
 
       ctx.closePath();
-      ctx.fillStyle = DrawConfig.colors.polygonFill;
-      // ctx.fill();
       ctx.strokeStyle = DrawConfig.colors.polygonStroke;
       ctx.lineWidth = DrawConfig.lineWidthScale;
       ctx.stroke();
@@ -265,8 +289,6 @@ export function drawPolygons(
         }
 
         ctx.closePath();
-        ctx.fillStyle = DrawConfig.colors.holeFill;
-        // ctx.fill();
         ctx.strokeStyle = DrawConfig.colors.polygonStroke;
         ctx.lineWidth = DrawConfig.lineWidthScale;
         ctx.stroke();

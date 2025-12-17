@@ -83,7 +83,7 @@ function SettingsPanel() {
 
                         {/* Enable Cursor Ship toggle */}
                         <div className="flex flex-row items-center justify-between">
-                            <div>Enable ship size guide</div>
+                            <div>Enable Ship Size Guide</div>
                             <input
                                 type="checkbox"
                                 checked={ctx.enableShipSizeGuide}
@@ -125,6 +125,16 @@ function SettingsPanel() {
                             />
                         </div>
 
+                        {/* Toggle trajectory dots */}
+                        <div className="flex flex-row items-center justify-between">
+                            <div>Show Trajectory Dots</div>
+                            <input
+                                type="checkbox"
+                                checked={ctx.showTrajectoryDots}
+                                onChange={(e) => ctx.setShowTrajectoryDots(e.target.checked)}
+                            />
+                        </div>
+
                         {/* full trajectory fidelity toggle */}
                         <div className="flex flex-row items-center justify-between">
                             <div>Full Trajectory Fidelity</div>
@@ -151,6 +161,26 @@ function SettingsPanel() {
                         </div>
 
                         <hr className="border-slate-300"></hr>
+
+                        {/* Toggle prediction dots */}
+                        <div className="flex flex-row items-center justify-between">
+                            <div>Show Prediction Dots</div>
+                            <input
+                                type="checkbox"
+                                checked={ctx.showPredictionDots}
+                                onChange={(e) => ctx.setShowPredictionDots(e.target.checked)}
+                            />
+                        </div>
+
+                        {/* Toggle prediction correction lines */}
+                        <div className="flex flex-row items-center justify-between">
+                            <div>Show Prediction Correction Lines</div>
+                            <input
+                                type="checkbox"
+                                checked={ctx.showPredictionCorrectionLines}
+                                onChange={(e) => ctx.setShowPredictionCorrectionLines(e.target.checked)}
+                            />
+                        </div>
 
                         {/* full prediction fidelity toggle */}
                         <div className="flex flex-row items-center justify-between">

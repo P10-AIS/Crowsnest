@@ -27,11 +27,11 @@ function App() {
             {ctx.showDepthImage && <CanvasLayer zIndex={1} drawMethod={(info) => drawGeoImage(depthImage, ctx.depthImageOpacity, info)} />}
             {ctx.showTrafficImage && <CanvasLayer zIndex={2} drawMethod={(info) => drawGeoImage(trafficImage, ctx.trafficImageOpacity, info)} />}
             {ctx.eezOutlineVisible && <CanvasLayer zIndex={3} drawMethod={(info) => drawPolygons(ctx.polygons, ctx.fullEezFidelity, info)} />}
-            {ctx.trajectoriesVisible && <CanvasLayer zIndex={4} drawMethod={(info) => drawTrajectories(ctx.trajectories, ctx.numTrajectoriesVisible, ctx.fullTrajectoryFidelity, info)} />}
+            {ctx.trajectoriesVisible && <CanvasLayer zIndex={4} drawMethod={(info) => drawTrajectories(ctx.trajectories, ctx.numTrajectoriesVisible, ctx.fullTrajectoryFidelity, ctx.showTrajectoryDots, info)} />}
 
             {Object.entries(ctx.modelPredictions).map(([modelName, predictions]) => (
               ctx.showModelPredictions[modelName] &&
-              <CanvasLayer key={modelName} zIndex={5} drawMethod={(info) => drawPredictions(predictions, ctx.fullPredictionFidelity, info)} />
+              <CanvasLayer key={modelName} zIndex={5} drawMethod={(info) => drawPredictions(predictions, ctx.fullPredictionFidelity, ctx.showPredictionDots, ctx.showPredictionCorrectionLines, info)} />
             ))}
 
             {ctx.enableShipSizeGuide && <CanvasLayer zIndex={6} drawMethod={(info) => drawShipCursor(info, ctx.shipSizeGuideImage)} />}
