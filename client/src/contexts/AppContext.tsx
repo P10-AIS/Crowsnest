@@ -3,7 +3,7 @@ import type { Polygon } from '../types/Polygon';
 import type { ZoomLevels } from '../types/ZoomLevels';
 import type { Trajectory } from '../types/Trajectory';
 import type { GeoImage } from '../types/GeoImage';
-import type { Prediction, PredictionStep } from '../types/Prediction';
+import type { Prediction } from '../types/Prediction';
 import { useLocalStorageState } from './LocalStorageState';
 
 interface AppContextType {
@@ -42,7 +42,7 @@ interface AppContextType {
     showESPG3034: boolean;
     setShowESPG3034: (show: boolean) => void;
     showModelPredictions: Record<string, boolean>;
-    setShowModelPredictions: (show: Record<string, boolean>) => void;
+    setShowModelPredictions: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
     modelPredictions: Record<string, ZoomLevels<Prediction[]>>;
     setModelPredictions: React.Dispatch<React.SetStateAction<Record<string, ZoomLevels<Prediction[]>>>>;
     fullPredictionFidelity: boolean;

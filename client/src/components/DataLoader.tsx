@@ -87,23 +87,33 @@ function DataLoader({ children }: { children: JSX.Element }) {
     }, []);
 
     useEffect(() => {
-        const models = ['lerp']
-
-        const fetchLatestPredictions = async (modelName: string) => {
+        const fetchModelsAndPredictions = async () => {
             try {
-                const response = await fetch('http://localhost:4000/predictions/' + modelName);
-                const data = await response.json();
-                const parsed = parsePredictions(data);
-                const zoomed = preparePredictions(parsed);
-                ctx.setModelPredictions((prev) => ({ ...prev, [modelName]: zoomed }));
+                const modelRes = await fetch('http://localhost:4000/predictions');
+                const { models } = await modelRes.json();
+
+                console.log('Available models:', models);
+
+                for (const model of models) {
+                    const response = await fetch(
+                        `http://localhost:4000/predictions/${model}`
+                    );
+                    const data = await response.json();
+
+                    const parsed = parsePredictions(data);
+                    const zoomed = preparePredictions(parsed);
+
+                    ctx.setModelPredictions((prev) => ({
+                        ...prev,
+                        [model]: zoomed,
+                    }));
+                }
             } catch (err) {
-                console.error('Failed to fetch trajectory:', err);
+                console.error('Failed to fetch predictions:', err);
             }
         };
 
-        for (const model of models) {
-            fetchLatestPredictions(model)
-        }
+        fetchModelsAndPredictions();
     }, []);
 
     useEffect(() => {

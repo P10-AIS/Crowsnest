@@ -105,6 +105,22 @@ app.get('/predictions/:model', async (req, res) => {
   }
 })
 
+app.get('/predictions', async (req, res) => {
+  try {
+    const keys = await redis.keys(`${PREDICTION_KEY}:*`)
+
+    const models = keys.map((key) =>
+      key.replace(`${PREDICTION_KEY}:`, '')
+    )
+
+    res.json({ models })
+  } catch (err) {
+    console.error('Error listing prediction models:', err)
+    res.status(500).json({ error: 'Failed to list models' })
+  }
+})
+
+
 app.post('/predictions/:model/reset', async (req, res) => {
   try {
     const { model } = req.params

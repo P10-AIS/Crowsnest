@@ -1,11 +1,41 @@
 import { useState } from "react";
 import { useAppContext } from "../contexts/AppContext";
-import { IoMdCog, IoMdClose } from "react-icons/io";
+import { IoMdCog, IoMdClose, IoMdTrash } from "react-icons/io";
 
 function SettingsPanel() {
     const ctx = useAppContext();
     const [hidden, setHidden] = useState(true);
 
+    async function handleDeletePrediction(modelName: string) {
+        if (!window.confirm(`Are you sure you want to delete prediction for ${modelName}?`)) {
+            return;
+        }
+
+        ctx.setModelPredictions(prev => {
+            const copy = { ...prev };
+            delete copy[modelName];
+            return copy;
+        });
+
+        ctx.setShowModelPredictions(prev => {
+            const copy = { ...prev };
+            delete copy[modelName];
+            return copy;
+        });
+
+        try {
+            const res = await fetch(
+                `http://localhost:4000/predictions/${modelName}/reset`,
+                { method: "POST" }
+            );
+
+            if (!res.ok) {
+                throw new Error(`Failed to delete prediction for ${modelName}`);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
     return (
         <div className="absolute m-5 bg-white rounded p-4 shadow-lg z-2000 overflow-auto text-slate-600 text-sm">
             {hidden && (
@@ -136,10 +166,12 @@ function SettingsPanel() {
                         <div>Toggle Model Predictions:</div>
                         <div className="p-2 bg-gray-200 rounded">
                             {Object.keys(ctx.modelPredictions).map((modelName) => (
-                                <div key={modelName} className="flex flex-row items-center justify-between">
-                                    <div>{modelName}</div>
+                                <div key={modelName} className="flex flex-row items-center space-x-3">
+                                    <button onClick={() => handleDeletePrediction(modelName)} className="hover:cursor-pointer hover:text-red-600"><IoMdTrash size={16} /></button>
+                                    <div className="truncate">{modelName}</div>
                                     <input
                                         type="checkbox"
+                                        className="ml-auto"
                                         checked={ctx.showModelPredictions[modelName] || false}
                                         onChange={(e) => ctx.setShowModelPredictions({
                                             ...ctx.showModelPredictions,
