@@ -102,6 +102,7 @@ export function drawPredictions(
   fullFidelity: boolean,
   showDots: boolean,
   showCorrectionLines: boolean,
+  showGroundTruth: boolean,
   idsInViewCallback: (idsInView: Set<number>) => void,
   info: DrawInfo,
   config: DrawConfig
@@ -186,19 +187,22 @@ export function drawPredictions(
     }
 
     // ---- draw true lines ----
-    ctx.strokeStyle = config.colors.truePoints;
-    ctx.lineWidth = config.lineWidthScale;
-    ctx.beginPath();
-    ctx.moveTo(truePts[0].x, truePts[0].y);
-    for (let i = 1; i < truePts.length; i++) {
-      ctx.lineTo(truePts[i].x, truePts[i].y);
+    if (showGroundTruth) {
+      ctx.strokeStyle = config.colors.truePoints;
+      ctx.lineWidth = config.lineWidthScale;
+      ctx.beginPath();
+      ctx.moveTo(truePts[0].x, truePts[0].y);
+      for (let i = 1; i < truePts.length; i++) {
+        ctx.lineTo(truePts[i].x, truePts[i].y);
+      }
+      ctx.stroke();
     }
-    ctx.stroke();
 
     // ---- draw true points ----
     if (zoom >= config.dotsZoom && showDots) {
       ctx.fillStyle = config.colors.truePoints;
       for (let i = 0; i < truePts.length; i++) {
+        if (!showGroundTruth && !p.level[trajZoom].masks[i]) continue;
         ctx.beginPath();
         ctx.arc(
           truePts[i].x,

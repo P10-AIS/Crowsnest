@@ -65,6 +65,8 @@ interface AppContextType {
     setShowPredictionDots: (show: boolean) => void;
     showPredictionCorrectionLines: boolean;
     setShowPredictionCorrectionLines: (show: boolean) => void;
+    showGroundTruth: boolean;
+    setShowGroundTruth: (show: boolean) => void;
     drawConfig: DrawConfig;
     setDrawConfig: (config: DrawConfig) => void;
 }
@@ -90,6 +92,7 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [showTrajectoryDots, setShowTrajectoryDots] = useLocalStorageState('showTrajectoryDots', true);
     const [showPredictionDots, setShowPredictionDots] = useLocalStorageState('showPredictionDots', true);
     const [showPredictionCorrectionLines, setShowPredictionCorrectionLines] = useLocalStorageState('showPredictionCorrectionLines', true);
+    const [showGroundTruth, setShowGroundTruth] = useLocalStorageState('showGroundTruth', true);
 
     const [trajectories, setTrajectories] = useState<Trajectory[]>([]);
     const [numTrajectoriesVisible, setNumTrajectoriesVisible] = useState(0);
@@ -178,6 +181,8 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
         setShowPredictionDots,
         showPredictionCorrectionLines,
         setShowPredictionCorrectionLines,
+        showGroundTruth,
+        setShowGroundTruth,
         drawConfig,
         setDrawConfig,
     };

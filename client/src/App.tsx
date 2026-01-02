@@ -60,7 +60,7 @@ function App() {
 
             {Object.entries(appCtx.modelPredictions).map(([modelName, predictions]) => (
               appCtx.showModelPredictions[modelName] &&
-              <CanvasLayer key={modelName} zIndex={5} drawMethod={(info) => drawPredictions(predictions, appCtx.fullPredictionFidelity, appCtx.showPredictionDots, appCtx.showPredictionCorrectionLines, (idsInView) => handlePredictionsInView(modelName, idsInView), info, appCtx.drawConfig)} />
+              <CanvasLayer key={modelName} zIndex={5} drawMethod={(info) => drawPredictions(predictions, appCtx.fullPredictionFidelity, appCtx.showPredictionDots, appCtx.showPredictionCorrectionLines, appCtx.showGroundTruth, (idsInView) => handlePredictionsInView(modelName, idsInView), info, appCtx.drawConfig)} />
             ))}
 
             {appCtx.enableShipSizeGuide && <CanvasLayer zIndex={6} drawMethod={(info) => drawShipCursor(info, appCtx.shipSizeGuideImage)} />}

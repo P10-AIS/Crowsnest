@@ -214,6 +214,16 @@ function SettingsPanel() {
                             />
                         </div>
 
+                        {/* Toggle ground truth lines */}
+                        <div className="flex flex-row items-center justify-between">
+                            <div>Show Ground Truth Lines</div>
+                            <input
+                                type="checkbox"
+                                checked={ctx.showGroundTruth}
+                                onChange={(e) => ctx.setShowGroundTruth(e.target.checked)}
+                            />
+                        </div>
+
                         {/* full prediction fidelity toggle */}
                         <div className="flex flex-row items-center justify-between">
                             <div>Full Prediction Fidelity</div>
