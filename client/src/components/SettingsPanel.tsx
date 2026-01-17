@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useAppContext } from "../contexts/AppContext";
 import { IoMdCog, IoMdClose, IoMdTrash } from "react-icons/io";
+import { useInViewContext } from "../contexts/InViewContext";
 
 function SettingsPanel() {
     const ctx = useAppContext();
+    const inViewCtx = useInViewContext();
     const [hidden, setHidden] = useState(true);
 
     async function handleDeletePrediction(modelName: string) {
@@ -36,6 +38,23 @@ function SettingsPanel() {
             console.error(err);
         }
     }
+
+
+    function handleTogglePrediction(checked: boolean, modelName: string) {
+        ctx.setShowModelPredictions({
+            ...ctx.showModelPredictions,
+            [modelName]: checked
+        })
+        inViewCtx.setModelPredictionsInView(prev => {
+            if (!checked) {
+                const newPrev = { ...prev };
+                delete newPrev[modelName];
+                return newPrev;
+            }
+            return prev;
+        });
+    }
+
     return (
         <div className="absolute top-5 left-5 bg-white rounded p-4 shadow-lg z-2000 overflow-auto text-slate-600 text-sm">
             {hidden && (
@@ -245,10 +264,7 @@ function SettingsPanel() {
                                         type="checkbox"
                                         className="ml-auto"
                                         checked={ctx.showModelPredictions[modelName] || false}
-                                        onChange={(e) => ctx.setShowModelPredictions({
-                                            ...ctx.showModelPredictions,
-                                            [modelName]: e.target.checked
-                                        })}
+                                        onChange={(e) => handleTogglePrediction(e.target.checked, modelName)}
                                     />
                                 </div>
                             ))}
