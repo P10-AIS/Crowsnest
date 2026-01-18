@@ -4,6 +4,10 @@ import zlib from 'zlib'
 import Redis from 'ioredis'
 import multer from 'multer'
 import http from 'http'
+import dotenv from 'dotenv'
+import { Readable } from "stream";
+
+dotenv.config()
 
 const app = express()
 app.use(cors())
@@ -184,6 +188,38 @@ app.get('/image/:name', async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve image' })
   }
 })
+
+// Map tiles ----------------------------------------------------------
+
+app.get("/omniscale/wms", async (req, res) => {
+  try {
+    const apiKey = process.env.OMNISCALE_API_KEY;
+    if (!apiKey) {
+      return res.status(500).send("Missing Omniscale API key");
+    }
+
+    const query = new URLSearchParams(req.query).toString();
+    const url = `https://maps.omniscale.net/v2/${apiKey}/style.default/map?${query}`;
+
+    const upstream = await fetch(url);
+
+    if (!upstream.ok || !upstream.body) {
+      const text = await upstream.text();
+      return res.status(upstream.status).send(text);
+    }
+
+    res.setHeader(
+      "Content-Type",
+      upstream.headers.get("content-type") ?? "image/png"
+    );
+    res.setHeader("Cache-Control", "public, max-age=86400");
+
+    Readable.fromWeb(upstream.body).pipe(res);
+  } catch (err) {
+    console.error("Omniscale proxy error:", err);
+    res.status(500).send("Proxy failed");
+  }
+});
 
 //  ----------------------------------------------------------
 

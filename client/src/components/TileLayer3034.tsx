@@ -3,8 +3,6 @@ import { CRS_3034 } from "../assets/crs3034";
 import { useMap } from "react-leaflet";
 import { useEffect } from "react";
 
-const apiUrl = import.meta.env.VITE_OMNISCALE_API;
-
 function TileLayer3034() {
     const map = useMap();
 
@@ -18,8 +16,7 @@ function TileLayer3034() {
             attribution: '© Omniscale',
         };
 
-        const wmsUrl = `https://maps.omniscale.net/v2/${apiUrl}/style.default/map?`;
-        const layer = L.tileLayer.wms(wmsUrl, wmsOptions);
+        const layer = L.tileLayer.wms("/api/omniscale/wms", wmsOptions);
 
         map.addLayer(layer);
 
