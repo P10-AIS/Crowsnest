@@ -15,5 +15,10 @@
 			]
 		}
 	},
+	"mounts": [
+		"type=bind,source=C:/Users/ANT/repos/studie/P10/Data,target=${containerWorkspaceFolder}/Data",
+		"type=bind,source=C:/Users/ANT/repos/studie/P10/Outputs,target=${containerWorkspaceFolder}/Outputs",
+		"type=bind,source=C:/Users/ANT/repos/studie/P10/Results,target=${containerWorkspaceFolder}/Results"
+	],
 	"shutdownAction": "none"
 }
