@@ -1,14 +1,14 @@
 import L from "leaflet";
-import { CRS_3034 } from "../assets/crs";
+import { CRS_5070 } from "../assets/crs";
 import { useMap } from "react-leaflet";
 import { useEffect } from "react";
 
-function TileLayer3034() {
+function TileLayer5070() {
     const map = useMap();
 
     useEffect(() => {
         const wmsOptions: L.WMSOptions = {
-            crs: CRS_3034,
+            crs: CRS_5070,
             layers: 'world',
             format: 'image/png',
             transparent: true,
@@ -28,4 +28,4 @@ function TileLayer3034() {
     return null;
 }
 
-export default TileLayer3034;
+export default TileLayer5070;

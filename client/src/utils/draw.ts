@@ -66,7 +66,7 @@ export const drawTrajectories = (
     });
 
     // --- Draw trajectory lines (Segmented to handle nulls) ---
-    ctx.strokeStyle = config.colors.true;
+    ctx.strokeStyle = config.colors.label;
     ctx.lineWidth = config.lineWidthScale;
     
     for (let i = 1; i < pts.length; i++) {
@@ -83,7 +83,7 @@ export const drawTrajectories = (
 
     // --- Draw trajectory points (Dots) ---
     if (zoom >= config.dotsZoom && showDots) {
-      ctx.fillStyle = config.colors.true;
+      ctx.fillStyle = config.colors.label;
       for (const pt of pts) {
         if (!pt) continue;
         ctx.beginPath();
@@ -160,7 +160,7 @@ export function drawPredictions(
     });
 
     if (zoom >= config.dotsZoom && showDots) {
-      ctx.fillStyle = config.colors.masked;
+      ctx.fillStyle = config.colors.prediction;
       
       for (let i = 0; i < predPts.length; i++) {
         const pt = predPts[i];
@@ -181,7 +181,7 @@ export function drawPredictions(
       // Skip if this segment involves a null point OR is explicitly marked as padding
       if (!start || !end || p.level[trajZoom].padding[i]) continue;
 
-      ctx.strokeStyle = config.colors.masked;
+      ctx.strokeStyle = config.colors.prediction;
       ctx.lineWidth = config.lineWidthScale;
 
       ctx.beginPath();

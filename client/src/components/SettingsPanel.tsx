@@ -41,7 +41,7 @@ function SettingsPanel() {
             }
         }
         ctx.setShowImageOverlay(newShowImageOverlay);
-    }, [ctx, ctx.projection])
+    }, [ctx.projection])
 
     async function handleUpdateBackendPredictions() {
         setUpdatingPredictions(true);

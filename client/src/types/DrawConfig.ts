@@ -1,9 +1,7 @@
 export type DrawConfig = {
     colors: {
-        true: string;
-        masked: string;
-        truePoints: string;
-        truePredictedLine: string;
+        label: string;
+        prediction: string;
         polygonStroke: string;
         start: string;
         end: string;

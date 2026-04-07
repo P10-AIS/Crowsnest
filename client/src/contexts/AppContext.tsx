@@ -68,8 +68,8 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: JSX.Element }) => {
-    const [eezDKOutlineVisible, setDKEezOutlineVisible] = useLocalStorageState('eezDKOutlineVisible', true);
-    const [eezUSOutlineVisible, setEezUSOutlineVisible] = useLocalStorageState('eezUSOutlineVisible', true);
+    const [eezDKOutlineVisible, setDKEezOutlineVisible] = useLocalStorageState('eezDKOutlineVisible', false);
+    const [eezUSOutlineVisible, setEezUSOutlineVisible] = useLocalStorageState('eezUSOutlineVisible', false);
     const [trajectoriesVisible, setTrajectoriesVisible] = useLocalStorageState('trajectoriesVisible', true);
     const [fullTrajectoryFidelity, setFullTrajectoryFidelity] = useLocalStorageState('fullTrajectoryFidelity', false);
     const [fullEezFidelity, setFullEezFidelity] = useLocalStorageState('fullEezFidelity', false);
@@ -99,10 +99,8 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [shipSizeGuideImage, setShipSizeGuideImage] = useState<HTMLImageElement | null>(null);
     const [drawConfig, setDrawConfig] = useState<DrawConfig>({
         colors: {
-            true: "rgba(0,100,255)",
-            masked: "rgba(255,0,0)",
-            truePoints: "rgba(0,100,255)",
-            truePredictedLine: "black",
+            label: "rgba(0,100,255)",
+            prediction: "rgba(255,0,0)",
             polygonStroke: "orange",
             start: "green",
             end: "red",
