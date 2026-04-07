@@ -2,7 +2,8 @@ import { useEffect, type JSX } from "react";
 import { useAppContext } from "../contexts/AppContext";
 import { parseMultiPolygon, parsePoints } from "../utils/parse";
 import { prepareEezPolygons, preparePoints } from "../utils/prepare";
-import eezData from '../assets/eez.json';
+import eezDataDK from '../assets/eez.json';
+import eezDataUS from '../assets/eezUS.json';
 import type { GeoImage } from "../types/GeoImage";
 import shipPng from "../assets/boat.png";
 
@@ -65,9 +66,15 @@ function DataLoader({ children }: { children: JSX.Element }) {
     }, []);
 
     useEffect(() => {
-        const parsed = parseMultiPolygon(eezData.features[0].geometry.coordinates);
+        const parsed = parseMultiPolygon(eezDataDK.features[0].geometry.coordinates);
         const zoomed = prepareEezPolygons(parsed);
-        ctx.setPolygons(zoomed);
+        ctx.setPolygonsDK(zoomed);
+    }, []);
+    
+    useEffect(() => {
+        const parsed = parseMultiPolygon(eezDataUS.features[0].geometry.coordinates); //ignore error...
+        const zoomed = prepareEezPolygons(parsed);
+        ctx.setPolygonsUS(zoomed);
     }, []);
 
     useEffect(() => {

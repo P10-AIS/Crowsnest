@@ -7,10 +7,14 @@ import type { DrawConfig } from '../types/DrawConfig';
 import { Projection } from '../types/projection';
 
 interface AppContextType {
-    polygons: Polygon[];
-    setPolygons: (polygons: Polygon[]) => void;
-    eezOutlineVisible: boolean;
-    setEezOutlineVisible: (visible: boolean) => void;
+    polygonsDK: Polygon[];
+    setPolygonsDK: (polygons: Polygon[]) => void;
+    polygonsUS: Polygon[];
+    setPolygonsUS: (polygons: Polygon[]) => void;
+    eezDKOutlineVisible: boolean;
+    setEezDKOutlineVisible: (visible: boolean) => void;
+    eezUSOutlineVisible: boolean;
+    setEezUSOutlineVisible: (visible: boolean) => void;
     trajectoriesVisible: boolean;
     setTrajectoriesVisible: (visible: boolean) => void;
     fullTrajectoryFidelity: boolean;
@@ -64,7 +68,8 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: JSX.Element }) => {
-    const [eezOutlineVisible, setEezOutlineVisible] = useLocalStorageState('eezOutlineVisible', true);
+    const [eezDKOutlineVisible, setDKEezOutlineVisible] = useLocalStorageState('eezDKOutlineVisible', true);
+    const [eezUSOutlineVisible, setEezUSOutlineVisible] = useLocalStorageState('eezUSOutlineVisible', true);
     const [trajectoriesVisible, setTrajectoriesVisible] = useLocalStorageState('trajectoriesVisible', true);
     const [fullTrajectoryFidelity, setFullTrajectoryFidelity] = useLocalStorageState('fullTrajectoryFidelity', false);
     const [fullEezFidelity, setFullEezFidelity] = useLocalStorageState('fullEezFidelity', false);
@@ -87,7 +92,8 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [projection, setProjection] = useLocalStorageState<Projection>('projection', Projection.EPSG3857);
 
 
-    const [polygons, setPolygons] = useState<Polygon[]>([]);
+    const [polygonsDK, setPolygonsDK] = useState<Polygon[]>([]);
+    const [polygonsUS, setPolygonsUS] = useState<Polygon[]>([]);
     const [modelPredictions, setModelPredictions] = useState<Record<string, Trajectory[]>>({});
     const [labels, setLabels] = useState<Record<string, Trajectory[]>>({});
     const [shipSizeGuideImage, setShipSizeGuideImage] = useState<HTMLImageElement | null>(null);
@@ -109,10 +115,14 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
 
 
     const value: AppContextType = {
-        polygons,
-        setPolygons,
-        eezOutlineVisible: eezOutlineVisible,
-        setEezOutlineVisible: setEezOutlineVisible,
+        polygonsDK: polygonsDK,
+        setPolygonsDK: setPolygonsDK,
+        polygonsUS: polygonsUS,
+        setPolygonsUS: setPolygonsUS,
+        eezDKOutlineVisible: eezDKOutlineVisible,
+        setEezDKOutlineVisible: setDKEezOutlineVisible,
+        eezUSOutlineVisible: eezUSOutlineVisible,
+        setEezUSOutlineVisible: setEezUSOutlineVisible,
         trajectoriesVisible,
         setTrajectoriesVisible,
         fullTrajectoryFidelity,

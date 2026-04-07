@@ -62,7 +62,8 @@ function App() {
               appCtx.showImageOverlay[name] &&
               <CanvasLayer key={name} zIndex={1} drawMethod={(info) => drawGeoImage(image, info)} />
             ))}
-            {appCtx.eezOutlineVisible && <CanvasLayer zIndex={3} drawMethod={(info) => drawPolygons(appCtx.polygons, appCtx.fullEezFidelity, info, appCtx.drawConfig)} />} 
+            {appCtx.eezDKOutlineVisible && <CanvasLayer zIndex={3} drawMethod={(info) => drawPolygons(appCtx.polygonsDK, appCtx.fullEezFidelity, info, appCtx.drawConfig)} />} 
+            {appCtx.eezUSOutlineVisible && <CanvasLayer zIndex={3} drawMethod={(info) => drawPolygons(appCtx.polygonsUS, appCtx.fullEezFidelity, info, appCtx.drawConfig)} />} 
 
             {Object.entries(appCtx.labels).map(([labelName, trajectories]) => (
               appCtx.showLabels[labelName] &&

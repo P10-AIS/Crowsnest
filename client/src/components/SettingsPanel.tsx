@@ -167,11 +167,19 @@ function SettingsPanel() {
 
                         {/* eez toggle */}
                         <div className="flex flex-row items-center justify-between">
-                            <div>Show EEZ</div>
+                            <div>Show EEZ DK</div>
                             <input
                                 type="checkbox"
-                                checked={ctx.eezOutlineVisible}
-                                onChange={(e) => ctx.setEezOutlineVisible(e.target.checked)}
+                                checked={ctx.eezDKOutlineVisible}
+                                onChange={(e) => ctx.setEezDKOutlineVisible(e.target.checked)}
+                            />
+                        </div>
+                        <div className="flex flex-row items-center justify-between">
+                            <div>Show EEZ US</div>
+                            <input
+                                type="checkbox"
+                                checked={ctx.eezUSOutlineVisible}
+                                onChange={(e) => ctx.setEezUSOutlineVisible(e.target.checked)}
                             />
                         </div>
 
