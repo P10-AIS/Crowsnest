@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAppContext } from "../contexts/AppContext";
 import { IoMdCog, IoMdClose } from "react-icons/io";
 import { useInViewContext } from "../contexts/InViewContext";
+import { Projection } from "../types/projection";
 
 function SettingsPanel() {
     const ctx = useAppContext();
@@ -85,7 +86,7 @@ function SettingsPanel() {
                         </div>
                         <hr className="border-slate-300"></hr>
 
-                        {/* espg3034 toggle */}
+                        {/* espg3034 toggle
                         <div className="flex flex-row items-center justify-between">
                             <div>Use EPSG:3034</div>
                             <input
@@ -93,8 +94,22 @@ function SettingsPanel() {
                                 checked={ctx.showESPG3034}
                                 onChange={(e) => ctx.setShowESPG3034(e.target.checked)}
                             />
-                        </div>
-
+                        </div> */}
+                        {Object.keys(Projection).map((projKey) => {
+                            const projValue = Projection[projKey as keyof typeof Projection];
+                            return (
+                                <div className="flex flex-row items-center justify-between" key={projValue}>
+                                    <div>{projValue}</div>
+                                    <input
+                                        type="radio"
+                                        name="projection"
+                                        checked={ctx.projection === projValue}
+                                        onChange={() => ctx.setProjection(projValue)}
+                                    />
+                                </div>
+                            );
+                        })}
+                        <hr className="border-slate-300"></hr>
                         {/* show map tiles toggle */}
                         <div className="flex flex-row items-center justify-between">
                             <div>Show Map Tiles</div>
@@ -249,83 +264,60 @@ function SettingsPanel() {
                         </div>
 
                         <hr className="border-slate-300"></hr>
+                        <div className="p-4 bg-gray-100 rounded-lg space-y-4">
+                            {Object.keys(ctx.imageOverlays).map((name) => {
+                                // Regex to extract the base name and the PROJ value
+                                // Matches the prefix and the content inside PROJ_...
+                                const formattedName = name.replace(/^(.*)\{.*PROJ_(.*?)\}/, (match, base, proj) => {
+                                    return `${base}_${proj.replace('.', ':')}`;
+                                });
 
-                        {/* show depth image toggle */}
-                        <div className="flex flex-row items-center justify-between">
-                            <div>Show Depth Image</div>
-                            <input
-                                type="checkbox"
-                                checked={ctx.showDepthImage}
-                                onChange={(e) => ctx.setShowDepthImage(e.target.checked)}
-                            />
-                        </div>
+                                return (
+                                    <div key={name} className="flex flex-col p-2 bg-white rounded border border-gray-200 shadow-sm transition-all hover:border-blue-400">
+                                        {/* Top Row: Name and Checkbox */}
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span 
+                                                className="text-sm font-medium text-gray-700 truncate cursor-help"
+                                                title={name} // Displays full original string on hover
+                                            >
+                                                {formattedName}
+                                            </span>
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                checked={ctx.showImageOverlay[name] || false}
+                                                onChange={(e) => ctx.setShowImageOverlay({
+                                                    ...ctx.showImageOverlay,
+                                                    [name]: e.target.checked
+                                                })}
+                                            />
+                                        </div>
 
-                        {/* depth image opacity slider */}
-                        <div className="flex flex-col">
-                            <div className="flex flex-row justify-between">
-                                <div>Depth Image Opacity: </div>
-                                <div>{ctx.depthImageOpacity}</div>
-                            </div>
-                            <input
-                                type="range"
-                                min={0}
-                                max={1}
-                                step={0.01}
-                                value={ctx.depthImageOpacity}
-                                onChange={(e) => ctx.setDepthImageOpacity(parseFloat(e.target.value))}
-                            />
-                        </div>
-
-                        {/* show bw depth image toggle */}
-                        <div className="flex flex-row items-center justify-between">
-                            <div>Show B&W Depth Image</div>
-                            <input
-                                type="checkbox"
-                                checked={ctx.showBWDepthImage}
-                                onChange={(e) => ctx.setShowBWDepthImage(e.target.checked)}
-                            />
-                        </div>
-
-                        {/* bw depth image opacity slider */}
-                        <div className="flex flex-col">
-                            <div className="flex flex-row justify-between">
-                                <div>B&W Depth Image Opacity: </div>
-                                <div>{ctx.bwDepthImageOpacity}</div>
-                            </div>
-                            <input
-                                type="range"
-                                min={0}
-                                max={1}
-                                step={0.01}
-                                value={ctx.bwDepthImageOpacity}
-                                onChange={(e) => ctx.setBWDepthImageOpacity(parseFloat(e.target.value))}
-                            />
-                        </div>
-
-                        {/* show traffic image toggle */}
-                        <div className="flex flex-row items-center justify-between">
-                            <div>Show Traffic Image</div>
-                            <input
-                                type="checkbox"
-                                checked={ctx.showTrafficImage}
-                                onChange={(e) => ctx.setShowTrafficImage(e.target.checked)}
-                            />
-                        </div>
-
-                        {/* traffic image opacity slider */}
-                        <div className="flex flex-col">
-                            <div className="flex flex-row justify-between">
-                                <div>Traffic Image Opacity: </div>
-                                <div>{ctx.trafficImageOpacity}</div>
-                            </div>
-                            <input
-                                type="range"
-                                min={0}
-                                max={1}
-                                step={0.01}
-                                value={ctx.trafficImageOpacity}
-                                onChange={(e) => ctx.setTrafficImageOpacity(parseFloat(e.target.value))}
-                            />
+                                        {/* Bottom Row: Full-width Slider */}
+                                        <div className="flex items-center space-x-2">
+                                            <span className="text-xs text-gray-400">Opacity</span>
+                                            <input
+                                                type="range"
+                                                min={0}
+                                                max={1}
+                                                step={0.01}
+                                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                                value={ctx.imageOverlays[name]?.opacity || 1}
+                                                onChange={(e) => ctx.setImageOverlays({
+                                                    ...ctx.imageOverlays,
+                                                    [name]: {
+                                                        ...ctx.imageOverlays[name],
+                                                        opacity: parseFloat(e.target.value)
+                                                    }
+                                                })}
+                                            />
+                                            <span className="text-xs font-mono text-gray-500 w-8">
+                                                {Math.round((ctx.imageOverlays[name]?.opacity || 1) * 100)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                         <hr className="border-slate-300"></hr>
                         <button onClick={handleUpdateBackendPredictions} className="rounded bg-blue-600 text-white py-2 px-4 hover:bg-blue-700 transition-colors" disabled={updatingPredictions}>

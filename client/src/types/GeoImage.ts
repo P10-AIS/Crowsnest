@@ -1,4 +1,5 @@
 import type { Point } from "./Point";
+import type { Projection } from "./projection";
 
 export type GeoImage = {
     img: HTMLImageElement;
@@ -6,4 +7,6 @@ export type GeoImage = {
         topRight: Point;
         bottomLeft: Point;
     }
+    opacity: number;
+    projection: Projection;
 }

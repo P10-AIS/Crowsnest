@@ -52,10 +52,14 @@ function App() {
         <MapComponent>
           <>
             {appCtx.showMapTiles && <TileLayerComponent />}
-            {appCtx.showDepthImage && <CanvasLayer zIndex={1} drawMethod={(info) => drawGeoImage(depthImage, appCtx.depthImageOpacity, info)} />}
+            {/* {appCtx.showDepthImage && <CanvasLayer zIndex={1} drawMethod={(info) => drawGeoImage(depthImage, appCtx.depthImageOpacity, info)} />}
             {appCtx.showBWDepthImage && <CanvasLayer zIndex={1} drawMethod={(info) => drawGeoImage(bwDepthImage, appCtx.bwDepthImageOpacity, info)} />}
             {appCtx.showTrafficImage && <CanvasLayer zIndex={2} drawMethod={(info) => drawGeoImage(trafficImage, appCtx.trafficImageOpacity, info)} />}
-            {appCtx.eezOutlineVisible && <CanvasLayer zIndex={3} drawMethod={(info) => drawPolygons(appCtx.polygons, appCtx.fullEezFidelity, info, appCtx.drawConfig)} />}
+            {appCtx.eezOutlineVisible && <CanvasLayer zIndex={3} drawMethod={(info) => drawPolygons(appCtx.polygons, appCtx.fullEezFidelity, info, appCtx.drawConfig)} />} */}
+            {Object.entries(appCtx.imageOverlays).map(([name, image]) => (
+              appCtx.showImageOverlay[name] &&
+              <CanvasLayer key={name} zIndex={1} drawMethod={(info) => drawGeoImage(image, info)} />
+            ))}
 
             {Object.entries(appCtx.labels).map(([labelName, trajectories]) => (
               appCtx.showLabels[labelName] &&

@@ -4,6 +4,7 @@ import type { GeoImage } from '../types/GeoImage';
 import type { Trajectory } from '../types/Prediction';
 import { useLocalStorageState } from './LocalStorageState';
 import type { DrawConfig } from '../types/DrawConfig';
+import { Projection } from '../types/projection';
 
 interface AppContextType {
     polygons: Polygon[];
@@ -66,6 +67,12 @@ interface AppContextType {
     setShowPredictionDots: (show: boolean) => void;
     drawConfig: DrawConfig;
     setDrawConfig: (config: DrawConfig) => void;
+    imageOverlays: Record<string, GeoImage>;
+    setImageOverlays: React.Dispatch<React.SetStateAction<Record<string, GeoImage>>>;
+    showImageOverlay: Record<string, boolean>;
+    setShowImageOverlay: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+    projection: Projection;
+    setProjection: (projection: Projection) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -90,6 +97,10 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [showTrajectoryDots, setShowTrajectoryDots] = useLocalStorageState('showTrajectoryDots', true);
     const [showPredictionDots, setShowPredictionDots] = useLocalStorageState('showPredictionDots', true);
     const [trajectoryDensity, setTrajectoryDensity] = useLocalStorageState('trajectoryDensity', 0.1);
+    const [imageOverlays, setImageOverlays] = useState<Record<string, GeoImage>>({});
+    const [showImageOverlay, setShowImageOverlay] = useLocalStorageState<Record<string, boolean>>('showImageOverlay', {});
+    const [projection, setProjection] = useLocalStorageState<Projection>('projection', Projection.EPSG3857);
+
 
     const [polygons, setPolygons] = useState<Polygon[]>([]);
     const [depthImage3034, setDepthImage3034] = useState<GeoImage | null>(null);
@@ -179,6 +190,12 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
         setShowPredictionDots,
         drawConfig,
         setDrawConfig,
+        imageOverlays,
+        setImageOverlays,
+        projection,
+        setProjection,
+        showImageOverlay,
+        setShowImageOverlay
     };
 
     return (

@@ -259,7 +259,6 @@ export function drawPolygons(
 
 export const drawGeoImage = (
   geoImage: GeoImage | null,
-  opacity: number,
   info: DrawInfo
 ) => {
   const { map, canvas } = info;
@@ -274,7 +273,7 @@ export const drawGeoImage = (
   const width = topRight.x - bottomLeft.x;
   const height = bottomLeft.y - topRight.y;
 
-  ctx.globalAlpha = opacity;
+  ctx.globalAlpha = geoImage.opacity;
   ctx.drawImage(img, bottomLeft.x, topRight.y, width, height);
 };
 

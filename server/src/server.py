@@ -1,26 +1,27 @@
 import os
 import httpx
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
-load_dotenv()
+import re
 from .state_loader import load_predictions, load_labels
+import base64
+import mimetypes
 
+load_dotenv()
 predictions_cache = {}
 labels_cache = {}
-HEATMAPS_FOLDER = "Outputs/Heatmaps"
 http_client = httpx.AsyncClient()
+IMAGES_FOLDER = "Outputs/HEATMAPS"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Loading predictions into memory...")
     load_predictions(predictions_cache)
     load_labels(labels_cache)
-    
+    print("trajectories loaded into memory")
     yield
     
-    print("Clearing memory and closing client...")
     predictions_cache.clear()
     labels_cache.clear()
     await http_client.aclose() # Clean up the client
@@ -86,17 +87,71 @@ def update_labels():
         "message": "Labels updated successfully."
     }
     
-@app.get("/heatmaps")
-def get_heatmaps():
-    heatmaps: list[str] = []
-    for filename in os.listdir(HEATMAPS_FOLDER):
-        heatmaps.append(filename)
-    return {"heatmaps": heatmaps}
+@app.get("/images")
+def get_images():
+    """Returns a list of all heatmap filenames in the folder."""
+    images: list[str] = []
+    if os.path.exists(IMAGES_FOLDER):
+        for filename in os.listdir(IMAGES_FOLDER):
+            if os.path.isfile(os.path.join(IMAGES_FOLDER, filename)):
+                images.append(filename)
+    return {"images": images}
 
 @app.get("/image/{filename}")
 def get_heatmap(filename: str):
-    path = os.path.join(HEATMAPS_FOLDER, filename)
-    if os.path.exists(path) and os.path.isfile(path):
-        return FileResponse(path, media_type="image/png")
-    else:
+    """
+    Reads the image file, extracts coordinates and projection from the filename,
+    and returns a JSON payload matching the legacy JS server format.
+    """
+    path = os.path.join(IMAGES_FOLDER, filename)
+    
+    if not (os.path.exists(path) and os.path.isfile(path)):
         raise HTTPException(status_code=404, detail="Heatmap not found.")
+
+    # Updated pattern to include the PROJ capture group
+    pattern = r"BL_(?P<bl_lat>[\d.-]+)_(?P<bl_lon>[\d.-]+)_TR_(?P<tr_lat>[\d.-]+)_(?P<tr_lon>[\d.-]+)_PROJ_(?P<proj_str>[\w.]+)"
+    match = re.search(pattern, filename)
+    
+    if not match:
+        raise HTTPException(
+            status_code=400, 
+            detail="Filename does not contain valid coordinate or projection data."
+        )
+    
+    coords = match.groupdict()
+    
+    raw_projection = coords["proj_str"]
+    formatted_projection = raw_projection.replace(".", ":")
+
+    area_obj = {
+        "top_right": {
+            "lat": float(coords["tr_lat"]),
+            "lon": float(coords["tr_lon"])
+        },
+        "bottom_left": {
+            "lat": float(coords["bl_lat"]),
+            "lon": float(coords["bl_lon"])
+        }
+    }
+
+    try:
+        with open(path, "rb") as f:
+            img_bytes = f.read()
+        base64_data = base64.b64encode(img_bytes).decode('utf-8')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read image file: {str(e)}")
+
+    mime_type, _ = mimetypes.guess_type(path)
+    if not mime_type:
+        mime_type = "image/png"
+
+    timestamp_ms = int(os.path.getmtime(path) * 1000)
+
+    return {
+        "name": filename,
+        "projection": formatted_projection,
+        "area": area_obj,
+        "mimeType": mime_type,
+        "data": base64_data,
+        "timestamp": timestamp_ms
+    }
