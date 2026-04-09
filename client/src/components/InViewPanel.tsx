@@ -8,24 +8,89 @@ function InViewPanel() {
     const appCtx = useAppContext();
     const [hidden, setHidden] = useState(true);
 
+    function computeTrajectoryEnabledMap(modelPredictions: typeof appCtx.modelPredictions) {
+        const map: Record<number, boolean> = {};
+
+        Object.values(modelPredictions).forEach(predictions => {
+            predictions.forEach(p => {
+                if (p.enabled) {
+                    map[p.trajectoryId] = true;
+                } else if (!(p.trajectoryId in map)) {
+                    map[p.trajectoryId] = false;
+                }
+            });
+        });
+
+        return map;
+    }
+
+    function areAllPredictionsEnabled(modelPredictions: typeof appCtx.modelPredictions) {
+        return Object.values(modelPredictions).every(predictions =>
+            predictions.every(p => p.enabled)
+        );
+    }
+
     function handleTogglePrediction(enabled: boolean, modelName: string, trajectoryId: number) {
-        appCtx.setModelPredictions(prev => ({
-            ...prev,
-            [modelName]: prev[modelName].map(p =>
-                p.trajectoryId === trajectoryId
-                    ? { ...p, enabled }
-                    : p
-            )
-        }));
+        appCtx.setModelPredictions(prev => {
+            const updatedPredictions = {
+                ...prev,
+                [modelName]: prev[modelName].map(p =>
+                    p.trajectoryId === trajectoryId
+                        ? { ...p, enabled }
+                        : p
+                )
+            };
+
+            const enabledMap = computeTrajectoryEnabledMap(updatedPredictions);
+            const allEnabled = areAllPredictionsEnabled(updatedPredictions);
+
+            appCtx.setLabels(prevLabels => {
+                const updated: typeof prevLabels = {};
+
+                for (const key in prevLabels) {
+                    updated[key] = prevLabels[key].map(label => ({
+                        ...label,
+                        enabled: allEnabled
+                            ? true
+                            : !!enabledMap[label.trajectoryId]
+                    }));
+                }
+
+                return updated;
+            });
+
+            return updatedPredictions;
+        });
     }
 
     function handleToggleAllPredictions(enabled: boolean, modelName: string) {
-        appCtx.setModelPredictions(prev => ({
-            ...prev,
-            [modelName]: prev[modelName].map(p => ({ ...p, enabled }))
-        }));
-    }
+        appCtx.setModelPredictions(prev => {
+            const updatedPredictions = {
+                ...prev,
+                [modelName]: prev[modelName].map(p => ({ ...p, enabled }))
+            };
 
+            const enabledMap = computeTrajectoryEnabledMap(updatedPredictions);
+            const allEnabled = areAllPredictionsEnabled(updatedPredictions);
+
+            appCtx.setLabels(prevLabels => {
+                const updated: typeof prevLabels = {};
+
+                for (const key in prevLabels) {
+                    updated[key] = prevLabels[key].map(label => ({
+                        ...label,
+                        enabled: allEnabled
+                            ? true 
+                            : !!enabledMap[label.trajectoryId]
+                    }));
+                }
+
+                return updated;
+            });
+
+            return updatedPredictions;
+        });
+    }
     return (
         <div className="absolute top-5 right-5 bg-white rounded p-4 shadow-lg z-2000 overflow-auto text-slate-600 text-sm">
             {/* Collapsed */}
@@ -57,7 +122,7 @@ function InViewPanel() {
 
                     <hr className="border-slate-300" />
 
-                    {Object.entries(inViewCtx.trajectoriesInView).map(
+                    {Object.entries(inViewCtx.modelPredictionsInView).map(
                         ([modelName, ids]) => {
                             const predictions = appCtx.modelPredictions[modelName];
                             if (!predictions || ids.size === 0) return null;

@@ -32,7 +32,7 @@ function App() {
   })();
 
   function handleTrajectoriesInView(modelName: string, idsInView: Set<number>) {
-    inViewCtx.setTrajectoriesInView(prev => {
+    inViewCtx.setModelPredictionsInView(prev => {
       const prevSet = prev[modelName];
 
       if (prevSet && setsEqual(prevSet, idsInView)) {

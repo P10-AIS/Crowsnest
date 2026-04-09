@@ -17,7 +17,7 @@ function SettingsPanel() {
             ...ctx.showModelPredictions,
             [modelName]: checked
         })
-        inViewCtx.setTrajectoriesInView(prev => {
+        inViewCtx.setModelPredictionsInView(prev => {
             if (!checked) {
                 const newPrev = { ...prev };
                 delete newPrev[modelName];
