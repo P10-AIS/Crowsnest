@@ -29,7 +29,6 @@ function metersToPixels(map: L.Map, meters: number): number {
   return Math.abs(pointA.y - pointB.y);
 }
 
-// ------------------- Drawing Functions -------------------
 export const drawTrajectories = (
   trajectories: Trajectory[],
   density: number,
@@ -39,7 +38,8 @@ export const drawTrajectories = (
   config: DrawConfig,
 ) => {
   const { map, canvas } = info;
-  const ctx = canvas.getContext("2d")!;
+  // alpha: true (default) ensures the background stays transparent
+  const ctx = canvas.getContext("2d")!; 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const bounds = map.getBounds();
@@ -52,67 +52,73 @@ export const drawTrajectories = (
 
   const zoom = map.getZoom();
   const trajZoom = fullTrajectoryFidelity ? 17 : zoom;
+  const markerSize = config.radiusScale * 1.5;
 
-  trajectories.slice(0, Math.ceil(trajectories.length * density)).forEach((t) => {
-    if (t.level[trajZoom].points.length === 0) return;
-    if (!isBoundingBoxInView(t.level[trajZoom].boundingBox, viewBox)) return;
-    if (!t.enabled) return;
-    const pts = t.level[trajZoom].points.map((p) => {
-      if (p.lat === null || p.lng === null || p.lat === undefined) {
-        return null;
-      }
-      const pt = map.latLngToContainerPoint([p.lat, p.lng]);
-      return { x: pt.x, y: pt.y };
-    });
+  trajectories
+    .slice(0, Math.ceil(trajectories.length * density))
+    .forEach((t) => {
+      if (!t.enabled || t.level[trajZoom].points.length === 0) return;
+      if (!isBoundingBoxInView(t.level[trajZoom].boundingBox, viewBox)) return;
 
-    // --- Draw trajectory lines (Segmented to handle nulls) ---
-    ctx.strokeStyle = config.colors.label;
-    ctx.lineWidth = config.lineWidthScale;
-    
-    for (let i = 1; i < pts.length; i++) {
-      const start = pts[i - 1];
-      const end = pts[i];
-      // Only draw the segment if both points are valid
-      if (start && end) {
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.stroke();
-      }
-    }
+      const pts = t.level[trajZoom].points.map((p) => {
+        if (p.lat === null || p.lng === null || p.lat === undefined) return null;
+        const pt = map.latLngToContainerPoint([p.lat, p.lng]);
+        return { x: pt.x, y: pt.y };
+      });
+
+      ctx.beginPath();
+      ctx.strokeStyle = config.colors.label;
+      ctx.lineWidth = config.lineWidthScale;
+      ctx.lineCap = "round"; 
 
     // --- Draw trajectory points (Dots) ---
-    if (zoom >= config.dotsZoom && showDots) {
-      ctx.fillStyle = config.colors.label;
-      for (const pt of pts) {
-        if (!pt) continue;
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, config.radiusScale, 0, Math.PI * 2);
-        ctx.fill();
+      if (zoom >= config.dotsZoom && showDots) {
+        ctx.fillStyle = config.colors.label;
+        for (const pt of pts) {
+          if (!pt) continue;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, config.radiusScale, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
-    }
+      let isFirst = true;
+      for (const pt of pts) {
+        if (!pt) {
+          isFirst = true;
+          continue;
+        }
+        if (isFirst) {
+          ctx.moveTo(pt.x, pt.y);
+          isFirst = false;
+        } else {
+          ctx.lineTo(pt.x, pt.y);
+        }
+      }
+      ctx.stroke();
 
-    // --- Draw start and end points ---
-    const radius = config.radiusScale;
-    
-    // Find first non-null point
-    const firstPt = pts.find(p => p !== null);
-    if (firstPt) {
-      ctx.beginPath();
-      ctx.arc(firstPt.x, firstPt.y, radius, 0, 2 * Math.PI);
-      ctx.fillStyle = config.colors.start;
-      ctx.fill();
-    }
+      const firstPt = pts.find(p => p !== null);
+      const lastPt = [...pts].reverse().find(p => p !== null);
 
-    // Find last non-null point
-    const lastPt = [...pts].reverse().find(p => p !== null);
-    if (lastPt) {
-      ctx.beginPath();
-      ctx.arc(lastPt.x, lastPt.y, radius, 0, 2 * Math.PI);
-      ctx.fillStyle = config.colors.end;
-      ctx.fill();
-    }
-  });
+      if (firstPt) {
+        ctx.fillStyle = config.colors.start;
+        ctx.fillRect(
+          firstPt.x - (config.radiusScale * 0.75), 
+          firstPt.y - (config.radiusScale * 0.75), 
+          markerSize, 
+          markerSize
+        );
+      }
+
+      if (lastPt) {
+        ctx.fillStyle = config.colors.end;
+        ctx.fillRect(
+          lastPt.x - (config.radiusScale * 0.75), 
+          lastPt.y - (config.radiusScale * 0.75), 
+          markerSize, 
+          markerSize
+        );
+      }
+    });
 };
 
 export function drawPredictions(
