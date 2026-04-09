@@ -1,0 +1,1 @@
+export type ImageOpacities = Record<string, number>;

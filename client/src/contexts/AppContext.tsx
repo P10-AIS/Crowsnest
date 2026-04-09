@@ -5,6 +5,7 @@ import type { Trajectory } from '../types/Prediction';
 import { useLocalStorageState } from './LocalStorageState';
 import type { DrawConfig } from '../types/DrawConfig';
 import { Projection } from '../types/projection';
+import type { ImageOpacities } from '../types/Opacity';
 
 export interface AppContextType {
     polygonsDK: Polygon[];
@@ -45,6 +46,8 @@ export interface AppContextType {
     setDrawConfig: (config: DrawConfig) => void;
     imageOverlays: Record<string, GeoImage>;
     setImageOverlays: React.Dispatch<React.SetStateAction<Record<string, GeoImage>>>;
+    imageOpacities: ImageOpacities;
+    setImageOpacities: React.Dispatch<React.SetStateAction<ImageOpacities>>;
     showImageOverlay: Record<string, boolean>;
     setShowImageOverlay: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
     projection: Projection;
@@ -75,6 +78,7 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [projection, setProjection] = useLocalStorageState<Projection>('projection', Projection.EPSG3857);
     const [zoom, setZoom] = useState<number>(5);
     const [center, setCenter] = useState<[number, number]>([56.15674, 10.21076]);
+    const [imageOpacities, setImageOpacities] = useLocalStorageState<ImageOpacities>('imageOpacities', {});
 
     const [polygonsDK, setPolygonsDK] = useState<Polygon[]>([]);
     const [polygonsUS, setPolygonsUS] = useState<Polygon[]>([]);
@@ -135,6 +139,8 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
         setDrawConfig,
         imageOverlays,
         setImageOverlays,
+        imageOpacities,
+        setImageOpacities,
         projection,
         setProjection,
         showImageOverlay,

@@ -14,10 +14,10 @@ type StorageKey =
     | "showTrajectoryDots"
     | "showPredictionDots"
     | "drawConfig"
-    | "imageOverlays"
     | "showImageOverlay"
     | "projection"
     | "zoom"
-    | "center";
+    | "center"
+    | "imageOpacities";
 
 export type AppSnapshot = Pick<AppContextType, StorageKey>;

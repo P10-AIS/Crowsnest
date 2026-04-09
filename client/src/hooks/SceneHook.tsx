@@ -9,7 +9,7 @@ export interface Snapshot {
     name: string;
     appData: AppSnapshot; 
     enabledPredictions: Record<string, number[]>;
-    inViewData: Record<string, number[]>; // Stored as arrays for JSON serialization
+    inViewData: Record<string, number[]>;
 }
 
 
@@ -49,7 +49,6 @@ export const useSnapshotManager = () => {
     }
     
     const takeSnapshot = (name: string) => {
-        // 1. Explicitly pick the keys defined in AppSnapshot to avoid saving large objects/blobs
         const appData: AppSnapshot = {
             eezDKOutlineVisible: appContext.eezDKOutlineVisible,
             eezUSOutlineVisible: appContext.eezUSOutlineVisible,
@@ -64,11 +63,11 @@ export const useSnapshotManager = () => {
             showTrajectoryDots: appContext.showTrajectoryDots,
             showPredictionDots: appContext.showPredictionDots,
             drawConfig: appContext.drawConfig,
-            imageOverlays: appContext.imageOverlays,
             showImageOverlay: appContext.showImageOverlay,
             projection: appContext.projection,
             zoom: appContext.zoom,
             center: appContext.center,
+            imageOpacities: appContext.imageOpacities,
         };
 
         const serializableInView: Record<string, number[]> = {};

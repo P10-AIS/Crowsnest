@@ -7,6 +7,5 @@ export type GeoImage = {
         topRight: Point;
         bottomLeft: Point;
     }
-    opacity: number;
     projection: Projection;
 }

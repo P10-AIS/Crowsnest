@@ -347,17 +347,16 @@ function SettingsPanel() {
                                                         max={1}
                                                         step={0.01}
                                                         className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                                        value={ctx.imageOverlays[name]?.opacity || 1}
-                                                        onChange={(e) => ctx.setImageOverlays({
-                                                            ...ctx.imageOverlays,
-                                                            [name]: {
-                                                                ...ctx.imageOverlays[name],
-                                                                opacity: parseFloat(e.target.value)
-                                                            }
-                                                        })}
+                                                        value={ctx.imageOpacities[name] ?? 1}
+                                                        onChange={(e) =>
+                                                            ctx.setImageOpacities((prev) => ({
+                                                            ...prev,
+                                                            [name]: parseFloat(e.target.value),
+                                                            }))
+                                                        }
                                                     />
                                                     <span className="text-xs font-mono text-gray-500 w-8">
-                                                        {Math.round((ctx.imageOverlays[name]?.opacity || 1) * 100)}%
+                                                        {Math.round((ctx.imageOpacities[name] || 1) * 100)}%
                                                     </span>
                                                 </div>
                                             </div>
