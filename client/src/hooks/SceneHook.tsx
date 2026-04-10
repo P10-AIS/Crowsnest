@@ -126,7 +126,6 @@ export const useSnapshotManager = () => {
             }
         });
 
-        // 2. Helper function to restore record-based settings safely
         const filterAndSet = (
             snapshotRecord: Record<string, any> | undefined, 
             contextRecord: Record<string, any> | undefined, 

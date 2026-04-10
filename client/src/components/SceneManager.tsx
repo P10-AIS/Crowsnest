@@ -65,7 +65,7 @@ export default function SceneManager() {
                             <div className="text-slate-400 italic text-center py-2">No saved scenes.</div>
                         )}
                         {snapshots.map((snapshot) => {
-                            const missing = missingApplicableKeys(curCtx, snapshot.appData);
+                            const missing = missingApplicableKeys(snapshot.appData);
                             const isIncomplete = missing.length > 0;
 
                             return (
