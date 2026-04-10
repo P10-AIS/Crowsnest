@@ -97,46 +97,10 @@ export const useSnapshotManager = () => {
     };
 
     const restoreSnapshot = (snapshot: Snapshot) => {
-    Object.entries(snapshot.appData).forEach(([key, value]) => {
-        const setterName = `set${key.charAt(0).toUpperCase() + key.slice(1)}` as keyof typeof appContext;
-        const setter = appContext[setterName];
-        if (typeof setter === 'function') (setter as Function)(value);
-    });
+        const { appData } = snapshot;
 
-    const restoredInView: Record<string, Set<number>> = {};
-    for (const [key, arr] of Object.entries(snapshot.inViewData)) {
-        restoredInView[key] = new Set(arr);
-    }
-
-    appContext.setModelPredictions(prevPredictions => {
-        const updatedPredictions = { ...prevPredictions };
-        
-        Object.keys(updatedPredictions).forEach(modelName => {
-            const enabledInSnapshot = new Set(snapshot.enabledPredictions?.[modelName] || []);
-            updatedPredictions[modelName] = updatedPredictions[modelName].map(p => ({
-                ...p,
-                enabled: enabledInSnapshot.has(p.trajectoryId)
-            }));
-        });
-
-        syncLabelsWithInViewPredictions(
-            updatedPredictions, 
-            restoredInView, 
-            appContext.setLabels
-        );
-
-        return updatedPredictions;
-    });
-
-    inViewContext.setModelPredictionsInView(restoredInView);
-};
-    const deleteSnapshot = (id: string) => {
-        setSnapshots(prev => prev.filter(s => s.id !== id));
-    };
-
-    const missingApplicableKeys = (snapshotData: AppSnapshot): string[] => {
-        const missingKeys: Set<string> = new Set();
-        const boolKeys: (keyof AppSnapshot)[] = [
+        // 1. Hardcode and filter the boolean settings
+        const simpleKeys = [
             "eezDKOutlineVisible",
             "eezUSOutlineVisible",
             "fullTrajectoryFidelity",
@@ -146,8 +110,101 @@ export const useSnapshotManager = () => {
             "enableShipSizeGuide",
             "showTrajectoryDots",
             "showPredictionDots",
+            "zoom",
+            "center",
+            "drawConfig",
+            "projection",
+        ] as const;
+
+        simpleKeys.forEach((key) => {
+            if (key in appContext && appData && key in appData) {
+                const setterName = `set${key.charAt(0).toUpperCase() + key.slice(1)}` as keyof typeof appContext;
+                const setter = appContext[setterName];
+                if (typeof setter === 'function') {
+                    (setter as Function)(appData[key]);
+                }
+            }
+        });
+
+        // 2. Helper function to restore record-based settings safely
+        const filterAndSet = (
+            snapshotRecord: Record<string, any> | undefined, 
+            contextRecord: Record<string, any> | undefined, 
+            setterName: keyof typeof appContext
+        ) => {
+            const setter = appContext[setterName];
+            if (!snapshotRecord || !contextRecord || typeof setter !== 'function') return;
+
+            const filteredRecord: Record<string, any> = {};
+            for (const [key, value] of Object.entries(snapshotRecord)) {
+                if (key in contextRecord) {
+                    filteredRecord[key] = value;
+                }
+            }
+            (setter as Function)(filteredRecord);
+        };
+
+        filterAndSet(appData?.imageOpacities, appContext.imageOverlays, 'setImageOpacities');
+        filterAndSet(appData?.showImageOverlay, appContext.imageOverlays, 'setShowImageOverlay');
+        filterAndSet(appData?.showLabels, appContext.labels, 'setShowLabels');
+        filterAndSet(appData?.showModelPredictions, appContext.modelPredictions, 'setShowModelPredictions');
+
+        const restoredInView: Record<string, Set<number>> = {};
+        if (snapshot.inViewData) {
+            for (const [key, arr] of Object.entries(snapshot.inViewData)) {
+                restoredInView[key] = new Set(arr);
+            }
+        }
+
+        if (typeof appContext.setModelPredictions === 'function') {
+            appContext.setModelPredictions((prevPredictions: Record<string, any[]>) => {
+                const updatedPredictions = { ...prevPredictions };
+                
+                Object.keys(updatedPredictions).forEach(modelName => {
+                    const enabledInSnapshot = new Set(snapshot.enabledPredictions?.[modelName] || []);
+                    updatedPredictions[modelName] = updatedPredictions[modelName].map(p => ({
+                        ...p,
+                        enabled: enabledInSnapshot.has(p.trajectoryId)
+                    }));
+                });
+
+                syncLabelsWithInViewPredictions(
+                    updatedPredictions, 
+                    restoredInView, 
+                    appContext.setLabels
+                );
+
+                return updatedPredictions;
+            });
+        }
+
+        if (inViewContext && typeof inViewContext.setModelPredictionsInView === 'function') {
+            inViewContext.setModelPredictionsInView(restoredInView);
+        }
+    };
+    const deleteSnapshot = (id: string) => {
+        setSnapshots(prev => prev.filter(s => s.id !== id));
+    };
+
+    const missingApplicableKeys = (snapshotData: AppSnapshot): string[] => {
+        const missingKeys: Set<string> = new Set();
+        const simpleKeys: (keyof AppSnapshot)[] = [
+            "eezDKOutlineVisible",
+            "eezUSOutlineVisible",
+            "fullTrajectoryFidelity",
+            "fullEezFidelity",
+            "showMapTiles",
+            "fullPredictionFidelity",
+            "enableShipSizeGuide",
+            "showTrajectoryDots",
+            "showPredictionDots",
+            "trajectoryDensity",
+            "zoom",
+            "center",
+            "projection",
+            "drawConfig",
         ];
-        for (const key of boolKeys) {
+        for (const key of simpleKeys) {
             if (!(key in appContext)) {
                 missingKeys.add(key);
             }
