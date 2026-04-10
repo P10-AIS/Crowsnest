@@ -99,8 +99,8 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
         dashPattern: [4, 4],
         numZoomLevels: 6,
         trajectorySimplificationThresholds: {
-            [Projection.EPSG3034]: 8, //zoomlevel where we begin to simplify
-            [Projection.EPSG3857]: 12,
+            [Projection.EPSG3034]: 7, //zoomlevel where we begin to simplify
+            [Projection.EPSG3857]: 11,
             [Projection.EPSG5070]: 10,
         }
     });

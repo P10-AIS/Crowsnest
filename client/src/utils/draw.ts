@@ -52,7 +52,6 @@ export const drawTrajectories = (
   };
 
 
-
   const zoom = Math.floor(map.getZoom()); 
   const threshold = config.trajectorySimplificationThresholds[projection] || 10;
   const maxFidelityIndex = config.numZoomLevels - 1; 
@@ -142,6 +141,7 @@ export function drawPredictions(
   density: number,
   fullFidelity: boolean,
   showDots: boolean,
+  projection: Projection,
   idsInViewCallback: (idsInView: Set<number>) => void,
   info: DrawInfo,
   config: DrawConfig
@@ -160,8 +160,21 @@ export function drawPredictions(
     maxLng: bounds.getEast(),
   };
 
-  const zoom = map.getZoom();
-  const trajZoom = fullFidelity ? 17 : zoom;
+  const zoom = Math.floor(map.getZoom()); 
+  const threshold = config.trajectorySimplificationThresholds[projection] || 10;
+  const maxFidelityIndex = config.numZoomLevels - 1; 
+
+  const zoomOutDifference = threshold - zoom;
+  let trajZoom;
+  if (zoomOutDifference <= 0) {
+    trajZoom = maxFidelityIndex; 
+  } else {
+    trajZoom = Math.max(0, maxFidelityIndex - zoomOutDifference);
+  }
+
+  if (fullFidelity) {
+    trajZoom = config.numZoomLevels - 1; //use the least simplified level
+  }
   const idsInView = new Set<number>();
 
   predictions.slice(0, Math.ceil(predictions.length * density)).forEach((p) => {
