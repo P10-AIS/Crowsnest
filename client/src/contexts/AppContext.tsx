@@ -61,24 +61,24 @@ export interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: JSX.Element }) => {
-    const [eezDKOutlineVisible, setDKEezOutlineVisible] = useLocalStorageState('eezDKOutlineVisible', false);
-    const [eezUSOutlineVisible, setEezUSOutlineVisible] = useLocalStorageState('eezUSOutlineVisible', false);
-    const [fullTrajectoryFidelity, setFullTrajectoryFidelity] = useLocalStorageState('fullTrajectoryFidelity', false);
-    const [fullEezFidelity, setFullEezFidelity] = useLocalStorageState('fullEezFidelity', false);
-    const [showMapTiles, setShowMapTiles] = useLocalStorageState('showMapTiles', true);
-    const [fullPredictionFidelity, setFullPredictionFidelity] = useLocalStorageState('fullPredictionFidelity', false);
-    const [showModelPredictions, setShowModelPredictions] = useLocalStorageState<Record<string, boolean>>('showModelPredictions', {});
-    const [showLabels, setShowLabels] = useLocalStorageState<Record<string, boolean>>('showLabels', {});
-    const [enableShipSizeGuide, setEnableShipSizeGuide] = useLocalStorageState('enableShipSizeGuide', false);
-    const [showTrajectoryDots, setShowTrajectoryDots] = useLocalStorageState('showTrajectoryDots', true);
-    const [showPredictionDots, setShowPredictionDots] = useLocalStorageState('showPredictionDots', true);
-    const [trajectoryDensity, setTrajectoryDensity] = useLocalStorageState('trajectoryDensity', 0.1);
+    const [eezDKOutlineVisible, setDKEezOutlineVisible] = useState(false);
+    const [eezUSOutlineVisible, setEezUSOutlineVisible] = useState(false);
+    const [fullTrajectoryFidelity, setFullTrajectoryFidelity] = useState(false);
+    const [fullEezFidelity, setFullEezFidelity] = useState(false);
+    const [showMapTiles, setShowMapTiles] = useState(true);
+    const [fullPredictionFidelity, setFullPredictionFidelity] = useState(false);
+    const [showModelPredictions, setShowModelPredictions] = useState<Record<string, boolean>>({});
+    const [showLabels, setShowLabels] = useState<Record<string, boolean>>({});
+    const [enableShipSizeGuide, setEnableShipSizeGuide] = useState(false);
+    const [showTrajectoryDots, setShowTrajectoryDots] = useState(true);
+    const [showPredictionDots, setShowPredictionDots] = useState(true);
+    const [trajectoryDensity, setTrajectoryDensity] = useState(0.1);
     const [imageOverlays, setImageOverlays] = useState<Record<string, GeoImage>>({});
-    const [showImageOverlay, setShowImageOverlay] = useLocalStorageState<Record<string, boolean>>('showImageOverlay', {});
-    const [projection, setProjection] = useLocalStorageState<Projection>('projection', Projection.EPSG3857);
+    const [showImageOverlay, setShowImageOverlay] = useState<Record<string, boolean>>({});
+    const [projection, setProjection] = useState<Projection>(Projection.EPSG3857);
     const [zoom, setZoom] = useState<number>(5);
     const [center, setCenter] = useState<[number, number]>([56.15674, 10.21076]);
-    const [imageOpacities, setImageOpacities] = useLocalStorageState<ImageOpacities>('imageOpacities', {});
+    const [imageOpacities, setImageOpacities] = useState<ImageOpacities>({});
 
     const [polygonsDK, setPolygonsDK] = useState<Polygon[]>([]);
     const [polygonsUS, setPolygonsUS] = useState<Polygon[]>([]);

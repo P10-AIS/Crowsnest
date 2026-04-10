@@ -63,7 +63,7 @@ function App() {
           <>
             {appCtx.showMapTiles && <TileLayerComponent />}
             {Object.entries(appCtx.imageOverlays).map(([name, image]) => (
-              appCtx.showImageOverlay[name] &&
+              appCtx.showImageOverlay[name] && name.includes(`PROJ_${appCtx.projection.replace(':', '.')}`) &&
               <CanvasLayer key={name} zIndex={1} drawMethod={(info) => drawGeoImage(image, appCtx.imageOpacities[name] ?? 1, info)} />
             ))}
             {appCtx.eezDKOutlineVisible && <CanvasLayer zIndex={3} drawMethod={(info) => drawPolygons(appCtx.polygonsDK, appCtx.fullEezFidelity, info, appCtx.drawConfig)} />} 

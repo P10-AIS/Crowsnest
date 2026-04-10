@@ -33,16 +33,6 @@ function SettingsPanel() {
         })
     }
 
-    useEffect(() => {
-        const newShowImageOverlay: Record<string, boolean> = {};
-        for (const name of Object.keys(ctx.imageOverlays)) {
-            if (name.includes(`PROJ_${ctx.projection.replace(':', '.')}`)) {
-                newShowImageOverlay[name] = ctx.showImageOverlay[name] || false;
-            }
-        }
-        ctx.setShowImageOverlay(newShowImageOverlay);
-    }, [ctx.projection])
-
     async function handleUpdateBackendPredictions() {
         setUpdatingPredictions(true);
         try {
@@ -233,7 +223,7 @@ function SettingsPanel() {
 
                         <div>Toggle Labels:</div>
                         <div className="p-2 bg-gray-200 rounded">
-                            {Object.keys(ctx.labels).map((labelName) => (
+                            {Object.keys(ctx.showLabels).map((labelName) => (
                                 <div key={labelName} className="flex flex-row items-center space-x-3">
                                     <div className="truncate">{labelName}</div>
                                     <input
@@ -271,7 +261,7 @@ function SettingsPanel() {
                         {/* show prediction toggles */}
                         <div>Toggle Model Predictions:</div>
                         <div className="p-2 bg-gray-200 rounded">
-                            {Object.keys(ctx.modelPredictions).map((modelName) => (
+                            {Object.keys(ctx.showModelPredictions).map((modelName) => (
                                 <div key={modelName} className="flex flex-row items-center space-x-3">
                                     <div className="truncate">{modelName}</div>
                                     <input

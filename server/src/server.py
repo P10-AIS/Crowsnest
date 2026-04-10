@@ -65,27 +65,18 @@ async def get_labels():
 @app.post("/update_predictions")
 def update_predictions():
     global predictions_cache
-    new_cache = {}
-    load_predictions(new_cache)
+    predictions_cache.clear() 
+    load_predictions(predictions_cache)
     
-    predictions_cache = new_cache 
-    
-    return {
-        "message": "Predictions updated successfully."
-    }
+    return {"message": "Predictions updated successfully."}
 
 @app.post("/update_labels")
 def update_labels():
     global labels_cache
+    labels_cache.clear() 
+    load_labels(labels_cache)
     
-    new_cache = {}
-    load_labels(new_cache)
-    
-    labels_cache = new_cache 
-    
-    return {
-        "message": "Labels updated successfully."
-    }
+    return {"message": "Labels updated successfully."}
     
 @app.get("/images")
 def get_images():

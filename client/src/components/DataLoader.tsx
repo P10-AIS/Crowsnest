@@ -31,7 +31,6 @@ async function fetchMapImage(imageName: string): Promise<GeoImage> {
                         lng: data.area.bottom_left.lon,
                     },
                 },
-                opacity: 1,
                 projection: data.projection,
             });
         };
@@ -66,6 +65,44 @@ function DataLoader({ children }: { children: JSX.Element }) {
     }, []);
 
     useEffect(() => {
+        ctx.setShowImageOverlay((prev) => {
+            const updated = { ...prev };
+            Object.keys(ctx.imageOverlays).forEach((k) => {
+                updated[k] = false;
+            });
+            return updated;
+        });
+
+        ctx.setImageOpacities((prev) => {
+            const updated = { ...prev };
+            Object.keys(ctx.imageOverlays).forEach((k) => {
+                updated[k] = 1;
+            });
+            return updated;
+        });
+    }, [ctx.imageOverlays]);
+
+    useEffect(() => {
+        ctx.setShowLabels((prev) => {
+            const updated = { ...prev };
+            Object.keys(ctx.labels).forEach((k) => {
+                updated[k] = false;
+            });
+            return updated;
+        });
+    }, [ctx.labels]);
+
+    useEffect(() => {
+        ctx.setShowModelPredictions((prev) => {
+            const updated = { ...prev };
+            Object.keys(ctx.modelPredictions).forEach((k) => {
+                updated[k] = false;
+            });
+            return updated;
+        });
+    }, [ctx.modelPredictions]);
+
+    useEffect(() => {
         const parsed = parseMultiPolygon(eezDataDK.features[0].geometry.coordinates);
         const zoomed = prepareEezPolygons(parsed);
         ctx.setPolygonsDK(zoomed);
@@ -84,7 +121,7 @@ function DataLoader({ children }: { children: JSX.Element }) {
                 
                 const responseData = await predictionsRes.json();
                 const predictions = responseData.points;
-
+                ctx.setModelPredictions({});
                 for (const model in predictions) {
                     const data = predictions[model];
                     const parsed = parsePoints(data);
@@ -110,7 +147,7 @@ function DataLoader({ children }: { children: JSX.Element }) {
                 
                 const responseData = await labelsRes.json();
                 const labels = responseData.points;
-
+                ctx.setLabels({});
                 for (const dataset in labels) {
                     const data = labels[dataset];
                     const parsed = parsePoints(data);

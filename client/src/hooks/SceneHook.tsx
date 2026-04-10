@@ -1,4 +1,4 @@
-import { useAppContext } from '../contexts/AppContext';
+import { useAppContext, type AppContextType } from '../contexts/AppContext';
 import { useInViewContext} from '../contexts/InViewContext';
 import { useLocalStorageState } from '../contexts/LocalStorageState';
 import type { AppSnapshot } from '../types/AppContextSceneState';
@@ -134,5 +134,35 @@ export const useSnapshotManager = () => {
         setSnapshots(prev => prev.filter(s => s.id !== id));
     };
 
-    return { snapshots, takeSnapshot, restoreSnapshot, deleteSnapshot };
+    const missingApplicableKeys = (curCtx: AppContextType, snapshotData: AppSnapshot): string[] => {
+        const recordFieldsToCheck: (keyof AppSnapshot)[] = [
+            "showModelPredictions",
+            "showLabels",
+            "showImageOverlay",
+            "imageOpacities"
+        ];
+
+        const missingKeys: string[] = [];
+
+        recordFieldsToCheck.forEach((field) => {
+            const snapshotRecord = snapshotData[field];
+            const currentRecord = curCtx[field];
+
+            // Ensure both fields exist and are objects/records before comparing
+            if (snapshotRecord && typeof snapshotRecord === 'object' && currentRecord) {
+                const snapshotEntryKeys = Object.keys(snapshotRecord);
+                const currentEntryKeys = new Set(Object.keys(currentRecord));
+
+                snapshotEntryKeys.forEach((key) => {
+                    // If the key from the snapshot isn't in the current context, it's "missing"
+                    if (!currentEntryKeys.has(key)) {
+                        missingKeys.push(key);
+                    }
+                });
+            }
+        });
+        return missingKeys;
+    };
+
+    return { snapshots, takeSnapshot, restoreSnapshot, deleteSnapshot, missingApplicableKeys };
 };
