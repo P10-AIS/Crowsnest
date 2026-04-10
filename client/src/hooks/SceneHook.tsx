@@ -21,27 +21,33 @@ export const useSnapshotManager = () => {
 
     function syncLabelsWithInViewPredictions(
         predictions: typeof appContext.modelPredictions,
-        inViewIdsByModel: Record<string, Set<number>>,
         setLabels: typeof appContext.setLabels
     ) {
-        const activeInViewIds = new Set<number>();
+        const activePredictionIds = new Set<number>();
+        let totalPredictions = 0;
+        let activePredictionsCount = 0;
         
-        Object.entries(predictions).forEach(([modelName, modelPredictions]) => {
-            const inViewForModel = inViewIdsByModel[modelName] || new Set();
-            
+        // Use Object.values since we don't need the modelName key
+        Object.values(predictions).forEach((modelPredictions) => {
+            totalPredictions += modelPredictions.length;
             modelPredictions.forEach(p => {
-                if (p.enabled && inViewForModel.has(p.trajectoryId)) {
-                    activeInViewIds.add(p.trajectoryId);
+                if (p.enabled) { 
+                    activePredictionsCount++;
+                    activePredictionIds.add(p.trajectoryId);
                 }
             });
         });
+
+        // True if there is at least one prediction and all of them are enabled
+        const allSelected = totalPredictions > 0 && activePredictionsCount === totalPredictions;
 
         setLabels(prevLabels => {
             const updated: typeof prevLabels = {};
             for (const [key, labels] of Object.entries(prevLabels)) {
                 updated[key] = labels.map(l => ({
                     ...l,
-                    enabled: activeInViewIds.has(l.trajectoryId)
+                    // Enable if its specific ID is active, or if ALL predictions are selected
+                    enabled: activePredictionIds.has(l.trajectoryId) || allSelected
                 }));
             }
             return updated;
@@ -111,6 +117,7 @@ export const useSnapshotManager = () => {
             "enableShipSizeGuide",
             "showTrajectoryDots",
             "showPredictionDots",
+            "trajectoryDensity",
             "zoom",
             "center",
             "drawConfig",
@@ -177,25 +184,22 @@ export const useSnapshotManager = () => {
         }
 
         if (typeof appContext.setModelPredictions === 'function') {
-            appContext.setModelPredictions((prevPredictions: Record<string, any[]>) => {
-                const updatedPredictions = { ...prevPredictions };
-                
-                Object.keys(updatedPredictions).forEach(modelName => {
-                    const enabledInSnapshot = new Set(snapshot.enabledPredictions?.[modelName] || []);
-                    updatedPredictions[modelName] = updatedPredictions[modelName].map(p => ({
-                        ...p,
-                        enabled: enabledInSnapshot.has(p.trajectoryId)
-                    }));
-                });
-
-                syncLabelsWithInViewPredictions(
-                    updatedPredictions, 
-                    restoredInView, 
-                    appContext.setLabels
-                );
-
-                return updatedPredictions;
+            const updatedPredictions = { ...appContext.modelPredictions };
+            
+            Object.keys(updatedPredictions).forEach(modelName => {
+                const enabledInSnapshot = new Set(snapshot.enabledPredictions?.[modelName] || []);
+                updatedPredictions[modelName] = updatedPredictions[modelName].map(p => ({
+                    ...p,
+                    enabled: enabledInSnapshot.has(p.trajectoryId) || enabledInSnapshot.size === 0
+                }));
             });
+
+            appContext.setModelPredictions(updatedPredictions);
+
+            syncLabelsWithInViewPredictions(
+                updatedPredictions, 
+                appContext.setLabels
+            );
         }
 
         if (inViewContext && typeof inViewContext.setModelPredictionsInView === 'function') {

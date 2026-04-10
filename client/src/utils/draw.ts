@@ -38,7 +38,6 @@ export const drawTrajectories = (
   config: DrawConfig,
 ) => {
   const { map, canvas } = info;
-  // alpha: true (default) ensures the background stays transparent
   const ctx = canvas.getContext("2d")!; 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
