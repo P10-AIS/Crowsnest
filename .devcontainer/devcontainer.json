@@ -4,15 +4,14 @@
 	"name": "Node.js & TypeScript",
 	"workspaceFolder": "/workspaces/TrajViz",
 	"build": {
-        // Path is relative to the devcontainer.json file.
-        "dockerfile": "Dockerfile"
-    },
+		// Path is relative to the devcontainer.json file.
+		"dockerfile": "Dockerfile"
+	},
 	"features": {
 		"ghcr.io/devcontainers/features/node:1": {
 			"version": "lts"
 		}
 	},
-	"postCreateCommand": "cd client && npm ci && cd ../server && pip install -r requirements.txt",
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -25,10 +24,8 @@
 		}
 	},
 	"mounts": [
-		"type=bind,source=C:/Users/ANT/repos/studie/P10/Data,target=${containerWorkspaceFolder}/Data",
-		"type=bind,source=C:/Users/ANT/repos/studie/P10/Outputs,target=${containerWorkspaceFolder}/Outputs",
-		"type=bind,source=C:/Users/ANT/repos/studie/P10/Results,target=${containerWorkspaceFolder}/Results",
-		"type=bind,source=C:/Users/ANT/repos/studie/P10/Predictions,target=${containerWorkspaceFolder}/Predictions"
+		"type=bind,source=/mnt/dataimputationgroup/Crate/Data,target=${containerWorkspaceFolder}/Data",
+		"type=bind,source=/mnt/dataimputationgroup/TRAIT/Predictions,target=${containerWorkspaceFolder}/Predictions"
 	],
 	"shutdownAction": "none"
 }

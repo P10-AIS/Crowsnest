@@ -6,31 +6,16 @@ services:
     ports:
       - '8000:80'
     restart: unless-stopped
-    env_file:
-      - ./client/.env
     depends_on:
       - server
-    networks:
-      - TrajNet
 
   server:
     build:
       context: ./server
       dockerfile: ./Dockerfile
     restart: unless-stopped
-    networks:
-      - TrajNet
-
-  redis:
-    image: redis:7
+    env_file:
+      - ./server/src/.env
     volumes:
-      - redis-data:/data
-    networks:
-      - TrajNet
-
-networks:
-  TrajNet:
-    driver: bridge
-
-volumes:
-  redis-data:
+      - /mnt/dataimputationgroup/Crate/Data:/app/Data
+      - /mnt/dataimputationgroup/TRAIT/Predictions:/app/Predictions

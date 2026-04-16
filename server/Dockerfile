@@ -1,11 +1,11 @@
-FROM node:22-alpine
+FROM python:3.14-slim
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY requirements.txt  ./
 
-RUN npm ci
+RUN pip install --no-cache-dir  -r requirements.txt
 
 COPY . .
 
-CMD ["npm", "start"]
+CMD ["uvicorn", "src.server:app", "--host", "0.0.0.0", "--port", "4000"]
