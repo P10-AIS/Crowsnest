@@ -5,3 +5,4 @@ Outputs
 Results
 Predictions
 *.pyc
+__pycache__

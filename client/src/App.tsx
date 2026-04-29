@@ -62,7 +62,7 @@ function App() {
         <MapComponent>
           <>
             {appCtx.showMapTiles && <TileLayerComponent />}
-            {Object.entries(appCtx.imageOverlays).map(([name, image]) => (
+            {/* {Object.entries(appCtx.imageOverlays).map(([name, image]) => (
               appCtx.showImageOverlay[name] && name.includes(`PROJ_${appCtx.projection.replace(':', '.')}`) &&
               <CanvasLayer key={name} zIndex={1} drawMethod={(info) => drawGeoImage(image, appCtx.imageOpacities[name] ?? 1, info)} />
             ))}
@@ -77,7 +77,7 @@ function App() {
             {Object.entries(appCtx.modelPredictions).map(([modelName, predictions]) => (
               appCtx.showModelPredictions[modelName] &&
               <CanvasLayer key={modelName} zIndex={5} drawMethod={(info) => drawPredictions(predictions, appCtx.trajectoryDensity, appCtx.fullPredictionFidelity, appCtx.showPredictionDots, appCtx.projection, (idsInView) => handleTrajectoriesInView(modelName, idsInView), info, appCtx.drawConfig)} />
-            ))}
+            ))} */}
 
             {appCtx.enableShipSizeGuide && <CanvasLayer zIndex={6} drawMethod={(info) => drawShipCursor(info, appCtx.shipSizeGuideImage)} />}
           </>
