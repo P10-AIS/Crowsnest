@@ -46,6 +46,36 @@ function DataLoader({ children }: { children: JSX.Element }) {
     const ctx = useAppContext();
 
     useEffect(() => {
+        const discoverNames = async () => {
+            try {
+                const [predRes, labelRes] = await Promise.all([
+                    fetch("/api/predictions").then(r => r.json()),
+                    fetch("/api/labels").then(r => r.json()),
+                ]);
+
+                ctx.setShowModelPredictions(prev => {
+                    const updates: Record<string, boolean> = {};
+                    for (const name of Object.keys(predRes)) {
+                        if (!(name in prev)) updates[name] = false;
+                    }
+                    return Object.keys(updates).length ? { ...prev, ...updates } : prev;
+                });
+
+                ctx.setShowLabels(prev => {
+                    const updates: Record<string, boolean> = {};
+                    for (const name of Object.keys(labelRes)) {
+                        if (!(name in prev)) updates[name] = false;
+                    }
+                    return Object.keys(updates).length ? { ...prev, ...updates } : prev;
+                });
+            } catch (err) {
+                console.error("Failed to discover model/dataset names:", err);
+            }
+        };
+        discoverNames();
+    }, []);
+
+    useEffect(() => {
         const parsed = parseMultiPolygon(eezDataDK.features[0].geometry.coordinates);
         ctx.setPolygonsDK(prepareEezPolygons(parsed));
     }, []);

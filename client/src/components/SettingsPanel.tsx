@@ -51,7 +51,7 @@ function SettingsPanel() {
     async function handleUpdateBackendLabels() {
         setUpdatingLabels(true);
         try {
-            const res = await fetch("/api/update_labels", { method: "POST" }); 
+            const res = await fetch("/api/update_labels", { method: "POST" });
             if (!res.ok) {
                 throw new Error("Failed to update backend labels");
             }
@@ -223,7 +223,7 @@ function SettingsPanel() {
 
                         <div>Toggle Labels:</div>
                         <div className="p-2 bg-gray-200 rounded">
-                            {Object.keys(ctx.labels).map((labelName) => (
+                            {Object.keys(ctx.showLabels).map((labelName) => (
                                 <div key={labelName} className="flex flex-row items-center space-x-3">
                                     <div className="truncate">{labelName}</div>
                                     <input
@@ -247,7 +247,7 @@ function SettingsPanel() {
                                 onChange={(e) => ctx.setFullPredictionFidelity(e.target.checked)}
                             />
                         </div>
-                        
+
                         {/* Toggle prediction dots */}
                         <div className="flex flex-row items-center justify-between">
                             <div>Show Prediction Dots</div>
@@ -261,7 +261,7 @@ function SettingsPanel() {
                         {/* show prediction toggles */}
                         <div>Toggle Model Predictions:</div>
                         <div className="p-2 bg-gray-200 rounded">
-                            {Object.keys(ctx.modelPredictions).map((modelName) => (
+                            {Object.keys(ctx.showModelPredictions).map((modelName) => (
                                 <div key={modelName} className="flex flex-row items-center space-x-3">
                                     <div className="truncate">{modelName}</div>
                                     <input
@@ -277,17 +277,17 @@ function SettingsPanel() {
                         <hr className="border-slate-300"></hr>
                         {/* Image overlays */}
                         <div className="bg-gray-100 rounded overflow-hidden">
-                            <button 
+                            <button
                                 onClick={() => setImageOverlayCollapsed(!imageOverlayCollapsed)}
                                 className="w-full flex items-center justify-between p-4 hover:bg-gray-200 transition-colors focus:outline-none"
                             >
                                 <span className="text-sm font-semibold text-gray-700">
                                     Image Overlays
                                 </span>
-                                <svg 
-                                    className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${imageOverlayCollapsed ? '' : 'rotate-180'}`} 
-                                    fill="none" 
-                                    viewBox="0 0 24 24" 
+                                <svg
+                                    className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${imageOverlayCollapsed ? '' : 'rotate-180'}`}
+                                    fill="none"
+                                    viewBox="0 0 24 24"
                                     stroke="currentColor"
                                 >
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -309,7 +309,7 @@ function SettingsPanel() {
                                         return (
                                             <div key={name} className="flex flex-col p-2 bg-white rounded border border-gray-200 shadow-sm transition-all hover:border-blue-400">
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <span 
+                                                    <span
                                                         className="text-sm font-medium text-gray-700 truncate cursor-help"
                                                         title={name}
                                                     >
@@ -337,8 +337,8 @@ function SettingsPanel() {
                                                         value={ctx.imageOpacities[name] ?? 1}
                                                         onChange={(e) =>
                                                             ctx.setImageOpacities((prev) => ({
-                                                            ...prev,
-                                                            [name]: parseFloat(e.target.value),
+                                                                ...prev,
+                                                                [name]: parseFloat(e.target.value),
                                                             }))
                                                         }
                                                     />

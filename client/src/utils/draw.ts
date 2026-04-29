@@ -1,12 +1,18 @@
-import type { DrawInfo } from "../components/CanvasLayer";
-import type { Bound } from "../types/Bound";
 import type { DrawConfig } from "../types/DrawConfig";
 import type { GeoImage } from "../types/GeoImage";
 import type { Polygon } from "../types/Polygon";
-import type { Trajectory } from "../types/Prediction";
-import { Projection } from "../types/projection";
+import type { Bound } from "../types/Bound";
+import type { DrawInfo } from "../components/CanvasLayer";
 
-// ------------------- Utility Functions -------------------
+// [lat, lon, timestamp] — exactly what the backend streams
+export type RawPoint = [number, number, number];
+// A single trajectory is an array of points
+export type RawTrajectory = RawPoint[];
+
+// ---------------------------------------------------------------------------
+// Utilities
+// ---------------------------------------------------------------------------
+
 function isBoundingBoxInView(bbox: Bound, view: Bound): boolean {
   return !(
     bbox.maxLat < view.minLat ||
@@ -20,210 +26,157 @@ function metersToPixels(map: L.Map, meters: number): number {
   const center = map.getCenter();
   const earthRadius = 6378137;
   const dLat = (meters / earthRadius) * (180 / Math.PI);
-
   const pointA = map.latLngToContainerPoint(center);
-  const pointB = map.latLngToContainerPoint({
-    lat: center.lat + dLat,
-    lng: center.lng,
-  });
-
+  const pointB = map.latLngToContainerPoint({ lat: center.lat + dLat, lng: center.lng });
   return Math.abs(pointA.y - pointB.y);
 }
 
-export const drawTrajectories = (
-  trajectories: Trajectory[],
-  density: number,
-  fullTrajectoryFidelity: boolean,
+function trajectoryBbox(pts: RawPoint[]): Bound {
+  let minLat = Infinity, maxLat = -Infinity;
+  let minLng = Infinity, maxLng = -Infinity;
+  for (const [lat, lon] of pts) {
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
+    if (lon < minLng) minLng = lon;
+    if (lon > maxLng) maxLng = lon;
+  }
+  return { minLat, maxLat, minLng, maxLng };
+}
+
+function viewBox(map: L.Map): Bound {
+  const b = map.getBounds();
+  return { minLat: b.getSouth(), maxLat: b.getNorth(), minLng: b.getWest(), maxLng: b.getEast() };
+}
+
+// ---------------------------------------------------------------------------
+// Draw trajectories (labels)
+// ---------------------------------------------------------------------------
+
+export function drawTrajectories(
+  trajectories: RawTrajectory[],
   showDots: boolean,
-  projection: Projection,
   info: DrawInfo,
   config: DrawConfig,
-) => {
-  const { map, canvas } = info;
-  const ctx = canvas.getContext("2d")!; 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  const bounds = map.getBounds();
-  const viewBox: Bound = {
-    minLat: bounds.getSouth(),
-    minLng: bounds.getWest(),
-    maxLat: bounds.getNorth(),
-    maxLng: bounds.getEast(),
-  };
-
-
-  const zoom = Math.floor(map.getZoom()); 
-  const threshold = config.trajectorySimplificationThresholds[projection] || 10;
-  const maxFidelityIndex = config.numZoomLevels - 1; 
-
-  const zoomOutDifference = threshold - zoom;
-  let trajZoom;
-  if (zoomOutDifference <= 0) {
-    trajZoom = maxFidelityIndex; 
-  } else {
-    trajZoom = Math.max(0, maxFidelityIndex - zoomOutDifference);
-  }
-
-  if (fullTrajectoryFidelity) {
-    trajZoom = config.numZoomLevels - 1; //use the least simplified level
-  }
-  const markerSize = config.radiusScale * 1.5;
-
-  trajectories
-    .slice(0, Math.ceil(trajectories.length * density))
-    .forEach((t) => {
-      if (!t.enabled || !t.level[trajZoom] || t.level[trajZoom].points.length === 0) return;
-      if (!isBoundingBoxInView(t.level[trajZoom].boundingBox, viewBox)) return;
-
-      const pts = t.level[trajZoom].points.map((p) => {
-        if (p.lat === null || p.lng === null || p.lat === undefined) return null;
-        const pt = map.latLngToContainerPoint([p.lat, p.lng]);
-        return { x: pt.x, y: pt.y };
-      });
-
-      ctx.beginPath();
-      ctx.strokeStyle = config.colors.label;
-      ctx.lineWidth = config.lineWidthScale;
-      ctx.lineCap = "round"; 
-
-    // --- Draw trajectory points (Dots) ---
-      if (zoom >= config.dotsZoom && showDots) {
-        ctx.fillStyle = config.colors.label;
-        for (const pt of pts) {
-          if (!pt) continue;
-          ctx.beginPath();
-          ctx.arc(pt.x, pt.y, config.radiusScale, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      let isFirst = true;
-      for (const pt of pts) {
-        if (!pt) {
-          isFirst = true;
-          continue;
-        }
-        if (isFirst) {
-          ctx.moveTo(pt.x, pt.y);
-          isFirst = false;
-        } else {
-          ctx.lineTo(pt.x, pt.y);
-        }
-      }
-      ctx.stroke();
-
-      const firstPt = pts.find(p => p !== null);
-      const lastPt = [...pts].reverse().find(p => p !== null);
-
-      if (firstPt) {
-        ctx.fillStyle = config.colors.start;
-        ctx.fillRect(
-          firstPt.x - (config.radiusScale * 0.75), 
-          firstPt.y - (config.radiusScale * 0.75), 
-          markerSize, 
-          markerSize
-        );
-      }
-
-      if (lastPt) {
-        ctx.fillStyle = config.colors.end;
-        ctx.fillRect(
-          lastPt.x - (config.radiusScale * 0.75), 
-          lastPt.y - (config.radiusScale * 0.75), 
-          markerSize, 
-          markerSize
-        );
-      }
-    });
-};
-
-export function drawPredictions(
-  predictions: Trajectory[],
-  density: number,
-  fullFidelity: boolean,
-  showDots: boolean,
-  projection: Projection,
-  idsInViewCallback: (idsInView: Set<number>) => void,
-  info: DrawInfo,
-  config: DrawConfig
 ) {
-  if (!predictions) return;
-
   const { map, canvas } = info;
+  if (!canvas) return;
+
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const bounds = map.getBounds();
-  const viewBox: Bound = {
-    minLat: bounds.getSouth(),
-    minLng: bounds.getWest(),
-    maxLat: bounds.getNorth(),
-    maxLng: bounds.getEast(),
-  };
+  const view = viewBox(map);
+  const zoom = map.getZoom();
+  const markerSize = config.radiusScale * 1.5;
 
-  const zoom = Math.floor(map.getZoom()); 
-  const threshold = config.trajectorySimplificationThresholds[projection] || 10;
-  const maxFidelityIndex = config.numZoomLevels - 1; 
+  for (const traj of trajectories) {
+    if (!traj || traj.length === 0) continue;
 
-  const zoomOutDifference = threshold - zoom;
-  let trajZoom;
-  if (zoomOutDifference <= 0) {
-    trajZoom = maxFidelityIndex; 
-  } else {
-    trajZoom = Math.max(0, maxFidelityIndex - zoomOutDifference);
-  }
+    const bbox = trajectoryBbox(traj);
+    if (!isBoundingBoxInView(bbox, view)) continue;
 
-  if (fullFidelity) {
-    trajZoom = config.numZoomLevels - 1; //use the least simplified level
-  }
-  const idsInView = new Set<number>();
-
-  predictions.slice(0, Math.ceil(predictions.length * density)).forEach((p) => {
-    if (!p.level[trajZoom] || p.level[trajZoom].points.length === 0) return;
-    if (!isBoundingBoxInView(p.level[trajZoom].boundingBox, viewBox)) return;
-
-    idsInView.add(p.trajectoryId);
-
-    if (!p.enabled) return;
-
-    const predPts = p.level[trajZoom].points.map((pt) => {
-      const containerPt = map.latLngToContainerPoint([pt.lat, pt.lng]);
-      return { x: containerPt.x, y: containerPt.y, timestamp: pt.timestamp };
+    // Project all points to canvas pixels
+    const pts = traj.map(([lat, lon]) => {
+      const p = map.latLngToContainerPoint([lat, lon]);
+      return { x: p.x, y: p.y };
     });
 
+    // Draw dots
     if (zoom >= config.dotsZoom && showDots) {
-      ctx.fillStyle = config.colors.prediction;
-      for (let i = 0; i < predPts.length; i++) {
-        const pt = predPts[i];
-        if (p.level[trajZoom].padding[i] || pt === null) {
-          continue;
-        }
+      ctx.fillStyle = config.colors.label;
+      for (const pt of pts) {
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, config.radiusScale, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    const baseTs = predPts[0]?.timestamp;
-    const timeThreshold = baseTs !== undefined ? baseTs + (p.historicHorizonM || 0) * 60 : 0;
-    
-    const predictionStartTimestamp = predPts.find(
-      (pt) => pt?.timestamp && pt.timestamp > timeThreshold
-    )?.timestamp;
+    // Draw line
+    ctx.beginPath();
+    ctx.strokeStyle = config.colors.label;
+    ctx.lineWidth = config.lineWidthScale;
+    ctx.lineCap = "round";
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) {
+      ctx.lineTo(pts[i].x, pts[i].y);
+    }
+    ctx.stroke();
 
-    // ---- draw predicted lines ----
-    for (let i = 1; i < predPts.length; i++) {
-      const start = predPts[i - 1];
-      const end = predPts[i];
+    // Start / end markers
+    const first = pts[0];
+    const last = pts[pts.length - 1];
+    const offset = config.radiusScale * 0.75;
 
-      // Skip if this segment involves a null point OR is explicitly marked as padding
-      if (!start || !end || p.level[trajZoom].padding[i]) continue;
+    ctx.fillStyle = config.colors.start;
+    ctx.fillRect(first.x - offset, first.y - offset, markerSize, markerSize);
 
-      if (predictionStartTimestamp !== undefined && end.timestamp < predictionStartTimestamp) {
-        ctx.strokeStyle = config.colors.label;
-      } else {
-        ctx.strokeStyle = config.colors.prediction;
+    ctx.fillStyle = config.colors.end;
+    ctx.fillRect(last.x - offset, last.y - offset, markerSize, markerSize);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Draw predictions
+// ---------------------------------------------------------------------------
+
+export function drawPredictions(
+  predictions: RawTrajectory[],
+  showDots: boolean,
+  historicHorizonMinutes: number | null,
+  idsInViewCallback: (idsInView: Set<number>) => void,
+  info: DrawInfo,
+  config: DrawConfig,
+) {
+  if (!predictions) return;
+
+  const { map, canvas } = info;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d")!;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const view = viewBox(map);
+  const zoom = map.getZoom();
+  const idsInView = new Set<number>();
+
+  predictions.forEach((traj, idx) => {
+    if (!traj || traj.length === 0) return;
+
+    const bbox = trajectoryBbox(traj);
+    if (!isBoundingBoxInView(bbox, view)) return;
+
+    idsInView.add(idx);
+
+    // Project points
+    const pts = traj.map(([lat, lon, ts]) => {
+      const p = map.latLngToContainerPoint([lat, lon]);
+      return { x: p.x, y: p.y, ts };
+    });
+
+    // Determine historic/prediction boundary timestamp
+    const baseTs = pts[0]?.ts;
+    const cutoffTs = baseTs !== undefined && historicHorizonMinutes !== null
+      ? baseTs + historicHorizonMinutes * 60
+      : null;
+
+    // Draw dots
+    if (zoom >= config.dotsZoom && showDots) {
+      ctx.fillStyle = config.colors.prediction;
+      for (const pt of pts) {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, config.radiusScale, 0, Math.PI * 2);
+        ctx.fill();
       }
-      ctx.lineWidth = config.lineWidthScale;
+    }
+
+    // Draw segments, colouring historic vs predicted portions differently
+    ctx.lineWidth = config.lineWidthScale;
+    for (let i = 1; i < pts.length; i++) {
+      const start = pts[i - 1];
+      const end = pts[i];
+
+      ctx.strokeStyle = cutoffTs !== null && end.ts <= cutoffTs
+        ? config.colors.label       // historic portion
+        : config.colors.prediction; // predicted portion
 
       ctx.beginPath();
       ctx.moveTo(start.x, start.y);
@@ -235,6 +188,10 @@ export function drawPredictions(
   idsInViewCallback(idsInView);
 }
 
+// ---------------------------------------------------------------------------
+// Draw polygons (EEZ outlines) — unchanged in structure
+// ---------------------------------------------------------------------------
+
 export function drawPolygons(
   polygons: Polygon[],
   fullFidelity: boolean,
@@ -245,79 +202,82 @@ export function drawPolygons(
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const bounds = map.getBounds();
-  const viewBox: Bound = {
-    minLat: bounds.getSouth(),
-    minLng: bounds.getWest(),
-    maxLat: bounds.getNorth(),
-    maxLng: bounds.getEast(),
-  };
-
+  const view = viewBox(map);
   const zoom = map.getZoom();
   const trajZoom = fullFidelity ? 17 : zoom;
 
   polygons.forEach((polygon) => {
-    if (!isBoundingBoxInView(polygon.level[trajZoom].outline.boundingBox, viewBox)) return;
+    const level = polygon.level[trajZoom];
+    if (!level) return;
+    if (!isBoundingBoxInView(level.outline.boundingBox, view)) return;
 
-    if (polygon.level[trajZoom].outline.points.length > 0) {
+    if (level.outline.points.length > 0) {
       ctx.beginPath();
-      const start = map.latLngToContainerPoint([polygon.level[trajZoom].outline.points[0].lat, polygon.level[trajZoom].outline.points[0].lng]);
+      const start = map.latLngToContainerPoint([
+        level.outline.points[0].lat,
+        level.outline.points[0].lng,
+      ]);
       ctx.moveTo(start.x, start.y);
-
-      for (let i = 1; i < polygon.level[trajZoom].outline.points.length; i++) {
-        const pt = map.latLngToContainerPoint([polygon.level[trajZoom].outline.points[i].lat, polygon.level[trajZoom].outline.points[i].lng]);
+      for (let i = 1; i < level.outline.points.length; i++) {
+        const pt = map.latLngToContainerPoint([
+          level.outline.points[i].lat,
+          level.outline.points[i].lng,
+        ]);
         ctx.lineTo(pt.x, pt.y);
       }
-
       ctx.closePath();
       ctx.strokeStyle = config.colors.polygonStroke;
       ctx.lineWidth = config.lineWidthScale;
       ctx.stroke();
     }
 
-    if (polygon.level[trajZoom].holes) {
-      polygon.level[trajZoom].holes.forEach((hole) => {
-        if (!isBoundingBoxInView(hole.boundingBox, viewBox)) return;
-        if (hole.points.length === 0) return;
+    if (level.holes) {
+      for (const hole of level.holes) {
+        if (!isBoundingBoxInView(hole.boundingBox, view)) continue;
+        if (hole.points.length === 0) continue;
 
         ctx.beginPath();
         const start = map.latLngToContainerPoint([hole.points[0].lat, hole.points[0].lng]);
         ctx.moveTo(start.x, start.y);
-
         for (let i = 1; i < hole.points.length; i++) {
           const pt = map.latLngToContainerPoint([hole.points[i].lat, hole.points[i].lng]);
           ctx.lineTo(pt.x, pt.y);
         }
-
         ctx.closePath();
         ctx.strokeStyle = config.colors.polygonStroke;
         ctx.lineWidth = config.lineWidthScale;
         ctx.stroke();
-      });
+      }
     }
   });
 }
 
-export const drawGeoImage = (
+// ---------------------------------------------------------------------------
+// Draw geo image overlay
+// ---------------------------------------------------------------------------
+
+export function drawGeoImage(
   geoImage: GeoImage | null,
   opacity: number,
-  info: DrawInfo
-) => {
+  info: DrawInfo,
+) {
   const { map, canvas } = info;
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   if (!geoImage) return;
 
   const { img, area } = geoImage;
   const topRight = map.latLngToContainerPoint([area.topRight.lat, area.topRight.lng]);
   const bottomLeft = map.latLngToContainerPoint([area.bottomLeft.lat, area.bottomLeft.lng]);
-  const width = topRight.x - bottomLeft.x;
-  const height = bottomLeft.y - topRight.y;
 
   ctx.globalAlpha = opacity;
-  ctx.drawImage(img, bottomLeft.x, topRight.y, width, height);
-};
+  ctx.drawImage(img, bottomLeft.x, topRight.y, topRight.x - bottomLeft.x, bottomLeft.y - topRight.y);
+  ctx.globalAlpha = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Draw ship size guide cursor
+// ---------------------------------------------------------------------------
 
 export function drawShipCursor(info: DrawInfo, shipImage: HTMLImageElement | null) {
   if (!shipImage) return;
@@ -329,9 +289,8 @@ export function drawShipCursor(info: DrawInfo, shipImage: HTMLImageElement | nul
   const center = map.getCenter();
   const centerPoint = map.latLngToContainerPoint(center);
   const pixelLength = metersToPixels(map, 20);
-  const aspect = shipImage.width / shipImage.height;
   const width = pixelLength;
-  const height = pixelLength / aspect;
+  const height = pixelLength / (shipImage.width / shipImage.height);
 
   ctx.save();
   ctx.translate(centerPoint.x, centerPoint.y);

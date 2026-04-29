@@ -70,7 +70,7 @@ def _viewport_params(
     }
 
 
-def _stream_trajectories(store: TrajectoryStore, lat_min, lat_max, lon_min, lon_max, zoom):
+def _stream_trajectories(store: TrajectoryStore, lat_min, lat_max, lon_min, lon_max, zoom, limit=None):
     """
     Generator that yields NDJSON lines, one trajectory per line.
 
@@ -88,6 +88,9 @@ def _stream_trajectories(store: TrajectoryStore, lat_min, lat_max, lon_min, lon_
     """
     matching = trajectories_in_viewport(
         store, lat_min, lat_max, lon_min, lon_max)
+
+    if limit is not None:
+        matching = matching[:limit]
 
     # Header — tells the frontend total count before data starts arriving
     yield json.dumps({"type": "header", "source": store.name, "total": len(matching)}) + "\n"
@@ -113,6 +116,7 @@ async def get_predictions(
     lon_min: float = Query(...),
     lon_max: float = Query(...),
     zoom: int = Query(..., ge=1, le=18),
+    limit: int = Query(default=None, ge=1),
 ):
     """
     Stream trajectories for one model that intersect the given viewport.
@@ -124,7 +128,8 @@ async def get_predictions(
             status_code=404, detail=f"Model '{model_name}' not found.")
 
     return StreamingResponse(
-        _stream_trajectories(store, lat_min, lat_max, lon_min, lon_max, zoom),
+        _stream_trajectories(store, lat_min, lat_max,
+                             lon_min, lon_max, zoom, limit),
         media_type="application/x-ndjson",
     )
 
@@ -137,6 +142,7 @@ async def get_labels(
     lon_min: float = Query(...),
     lon_max: float = Query(...),
     zoom: int = Query(..., ge=1, le=18),
+    limit: int = Query(default=None, ge=1),
 ):
     """
     Stream label trajectories for one dataset that intersect the given viewport.
@@ -148,7 +154,8 @@ async def get_labels(
             status_code=404, detail=f"Dataset '{dataset_name}' not found.")
 
     return StreamingResponse(
-        _stream_trajectories(store, lat_min, lat_max, lon_min, lon_max, zoom),
+        _stream_trajectories(store, lat_min, lat_max,
+                             lon_min, lon_max, zoom, limit),
         media_type="application/x-ndjson",
     )
 

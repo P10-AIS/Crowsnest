@@ -3,7 +3,7 @@ import { useMapEvents } from "react-leaflet";
 import { useAppContext } from "../contexts/AppContext";
 import { useLoadTrajectories } from "../hooks/LoadTrajectoriesHook";
 
-const DEBOUNCE_MS = 200;
+const DEBOUNCE_MS = 10;
 
 export default function MapController() {
   const { zoom, setZoom, center, setCenter } = useAppContext();
@@ -35,6 +35,11 @@ export default function MapController() {
       });
     }, DEBOUNCE_MS);
   }, [map, loadTrajectories]);
+
+  // Initial load + reload when loadTrajectories changes (i.e. density changed)
+  useEffect(() => {
+    triggerLoad();
+  }, [triggerLoad]);
 
   // Initial load when the map first mounts
   useEffect(() => {

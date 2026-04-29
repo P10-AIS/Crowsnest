@@ -17,7 +17,6 @@ import ViewPanel from './components/ViewPanel';
 
 function App() {
   const appCtx = useAppContext();
-  const inViewCtx = useInViewContext();
   const [MapComponent, TileLayerComponent] = (() => {
     switch (appCtx.projection) {
       case Projection.EPSG3034:
@@ -30,29 +29,6 @@ function App() {
         return [Map3857, TileLayer3857];
     }
   })();
-
-  function handleTrajectoriesInView(modelName: string, idsInView: Set<number>) {
-    inViewCtx.setModelPredictionsInView(prev => {
-      const prevSet = prev[modelName];
-
-      if (prevSet && setsEqual(prevSet, idsInView)) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        [modelName]: idsInView,
-      };
-    });
-  }
-
-  function setsEqual(a: Set<number>, b: Set<number>) {
-    if (a.size !== b.size) return false;
-    for (const v of a) {
-      if (!b.has(v)) return false;
-    }
-    return true;
-  }
 
   return (
     <div style={{ width: '100%', height: '100vh' }}>
@@ -72,12 +48,12 @@ function App() {
             {Object.entries(appCtx.labels).map(([labelName, trajectories]) => (
               appCtx.showLabels[labelName] &&
               <CanvasLayer key={labelName} zIndex={4} drawMethod={(info) => drawTrajectories(trajectories, appCtx.trajectoryDensity, appCtx.fullTrajectoryFidelity, appCtx.showTrajectoryDots, appCtx.projection, info, appCtx.drawConfig)} />
-            ))}
+            ))} */}
 
             {Object.entries(appCtx.modelPredictions).map(([modelName, predictions]) => (
               appCtx.showModelPredictions[modelName] &&
-              <CanvasLayer key={modelName} zIndex={5} drawMethod={(info) => drawPredictions(predictions, appCtx.trajectoryDensity, appCtx.fullPredictionFidelity, appCtx.showPredictionDots, appCtx.projection, (idsInView) => handleTrajectoriesInView(modelName, idsInView), info, appCtx.drawConfig)} />
-            ))} */}
+              <CanvasLayer key={modelName} zIndex={5} drawMethod={(info) => drawPredictions(predictions, appCtx.showPredictionDots, null, (a) => { }, info, appCtx.drawConfig)} />
+            ))}
 
             {appCtx.enableShipSizeGuide && <CanvasLayer zIndex={6} drawMethod={(info) => drawShipCursor(info, appCtx.shipSizeGuideImage)} />}
           </>

@@ -1,11 +1,12 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
-	"name": "Node.js & TypeScript",
-	"workspaceFolder": "/workspaces/TrajViz",
+	"name": "Crowsnest CPU Dev Container",
+	"workspaceFolder": "/workspaces/Crowsnest",
 	"build": {
 		// Path is relative to the devcontainer.json file.
-		"dockerfile": "Dockerfile"
+		"dockerfile": "../Dockerfile",
+		"context": "../.."
 	},
 	"features": {
 		"ghcr.io/devcontainers/features/node:1": {
@@ -23,11 +24,6 @@
 			]
 		}
 	},
-	"postCreateCommand": "pip install -r server/requirements.txt && cd client && npm ci",
 	"remoteUser": "root",
-	"mounts": [
-		"type=bind,source=C:/Users/ANT/repos/studie/P10/Data,target=${containerWorkspaceFolder}/server/Data",
-		"type=bind,source=C:/Users/ANT/repos/studie/P10/Predictions,target=${containerWorkspaceFolder}/server/Predictions"
-	],
 	"shutdownAction": "none"
 }
