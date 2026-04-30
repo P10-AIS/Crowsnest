@@ -99,9 +99,9 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [showTrajectoryDots, setShowTrajectoryDots] = useLocalStorageState("showTrajectoryDots", false);
     const [trajectoryDensity, setTrajectoryDensity] = useLocalStorageState("trajectoryDensity", 0.1);
     const [showImageOverlay, setShowImageOverlay] = useLocalStorageState("showImageOverlay", {});
-    const [projection, setProjection] = useLocalStorageState("projection", Projection.EPSG3857);
+    const [projection, setProjection] = useLocalStorageState<Projection>("projection", Projection.EPSG3857);
     const [zoom, setZoom] = useLocalStorageState("zoom", 5);
-    const [center, setCenter] = useLocalStorageState("center", [56.15674, 10.21076]);
+    const [center, setCenter] = useLocalStorageState<[number, number]>("center", [56.15674, 10.21076]);
     const [imageOpacities, setImageOpacities] = useLocalStorageState("imageOpacities", {});
     const [historicHorizonM, setHistoricHorizonM] = useLocalStorageState("historicHorizonM", {});
     const [drawConfig, setDrawConfig] = useLocalStorageState<DrawConfig>("drawConfig", {

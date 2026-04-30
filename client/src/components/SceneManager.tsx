@@ -87,21 +87,6 @@ export default function SceneManager() {
                                             </div>
                                         </div>
                                     )}
-
-                                    {Object.entries(restoreStatus.missingRecords).map(([category, items]) => (
-                                        <div key={category} className="bg-white/40 p-1.5 rounded border border-amber-100">
-                                            <span className="font-bold uppercase tracking-wider text-[9px] block mb-1 text-amber-600">
-                                                {category} <span className="font-normal opacity-70">({items.length} missing)</span>
-                                            </span>
-                                            <div className="grid grid-cols-1 gap-0.5 italic text-slate-500">
-                                                {items.map((item) => (
-                                                    <div key={item} className="truncate" title={item}>
-                                                        • {item}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
                                 </div>
                             )}
                         </div>

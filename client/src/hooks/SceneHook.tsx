@@ -19,7 +19,7 @@ export interface AppSnapshot {
     showImageOverlay: Record<string, boolean>;
     projection: string;
     zoom: number;
-    center: [number, number];
+    center: number[];
     imageOpacities: Record<string, number>;
 }
 
