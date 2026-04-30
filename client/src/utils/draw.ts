@@ -31,18 +31,6 @@ function metersToPixels(map: L.Map, meters: number): number {
   return Math.abs(pointA.y - pointB.y);
 }
 
-function trajectoryBbox(pts: RawPoint[]): Bound {
-  let minLat = Infinity, maxLat = -Infinity;
-  let minLng = Infinity, maxLng = -Infinity;
-  for (const [lat, lon] of pts) {
-    if (lat < minLat) minLat = lat;
-    if (lat > maxLat) maxLat = lat;
-    if (lon < minLng) minLng = lon;
-    if (lon > maxLng) maxLng = lon;
-  }
-  return { minLat, maxLat, minLng, maxLng };
-}
-
 function viewBox(map: L.Map): Bound {
   const b = map.getBounds();
   return { minLat: b.getSouth(), maxLat: b.getNorth(), minLng: b.getWest(), maxLng: b.getEast() };
@@ -54,6 +42,7 @@ function viewBox(map: L.Map): Bound {
 
 export function drawTrajectories(
   trajectories: Map<number, RawTrajectory>,
+  disabled: Set<number>,
   showDots: boolean,
   info: DrawInfo,
   config: DrawConfig,
@@ -66,25 +55,16 @@ export function drawTrajectories(
 
   const zoom = map.getZoom();
   const markerSize = config.radiusScale * 1.5;
+  const offset = config.radiusScale * 0.75;
 
-  for (const traj of trajectories.values()) {
+  for (const [idx, traj] of trajectories.entries()) {
+    if (disabled.has(idx)) continue;
     if (!traj || traj.length === 0) continue;
 
-    // Project all points to canvas pixels
     const pts = traj.map(([lat, lon]) => {
       const p = map.latLngToContainerPoint([lat, lon]);
       return { x: p.x, y: p.y };
     });
-
-    // Draw dots
-    if (zoom >= config.dotsZoom && showDots) {
-      ctx.fillStyle = config.colors.label;
-      for (const pt of pts) {
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, config.radiusScale, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
 
     // Draw line
     ctx.beginPath();
@@ -92,21 +72,21 @@ export function drawTrajectories(
     ctx.lineWidth = config.lineWidthScale;
     ctx.lineCap = "round";
     ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) {
-      ctx.lineTo(pts[i].x, pts[i].y);
-    }
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
     ctx.stroke();
 
+    // Draw dots
+    if (zoom >= config.dotsZoom && showDots) {
+      const s = config.radiusScale * 2;
+      ctx.fillStyle = config.colors.label;
+      for (const pt of pts) ctx.fillRect(pt.x - s / 2, pt.y - s / 2, s, s);
+    }
+
     // Start / end markers
-    const first = pts[0];
-    const last = pts[pts.length - 1];
-    const offset = config.radiusScale * 0.75;
-
     ctx.fillStyle = config.colors.start;
-    ctx.fillRect(first.x - offset, first.y - offset, markerSize, markerSize);
-
+    ctx.fillRect(pts[0].x - offset, pts[0].y - offset, markerSize, markerSize);
     ctx.fillStyle = config.colors.end;
-    ctx.fillRect(last.x - offset, last.y - offset, markerSize, markerSize);
+    ctx.fillRect(pts[pts.length - 1].x - offset, pts[pts.length - 1].y - offset, markerSize, markerSize);
   }
 }
 
@@ -116,9 +96,9 @@ export function drawTrajectories(
 
 export function drawPredictions(
   predictions: Map<number, RawTrajectory>,
+  disabled: Set<number>,
   showDots: boolean,
   historicHorizonMinutes: number | null,
-  idsInViewCallback: (idsInView: Set<number>) => void,
   info: DrawInfo,
   config: DrawConfig,
 ) {
@@ -131,61 +111,50 @@ export function drawPredictions(
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const zoom = map.getZoom();
-  const idsInView = new Set<number>();
 
   for (const [idx, traj] of predictions.entries()) {
+    if (disabled.has(idx)) continue;
+    if (!traj || traj.length === 0) continue;
 
-    if (!traj || traj.length === 0) return;
-
-    idsInView.add(idx);
-
-    // Project points
     const pts = traj.map(([lat, lon, ts]) => {
       const p = map.latLngToContainerPoint([lat, lon]);
       return { x: p.x, y: p.y, ts };
     });
 
-    // Determine historic/prediction boundary timestamp
     const baseTs = pts[0]?.ts;
     const cutoffTs = baseTs !== undefined && historicHorizonMinutes !== null
       ? baseTs + historicHorizonMinutes * 60
       : null;
 
-
-    // Draw segments, colouring historic vs predicted portions differently
+    // Draw segments
     ctx.lineWidth = config.lineWidthScale;
     for (let i = 1; i < pts.length; i++) {
       const start = pts[i - 1];
       const end = pts[i];
-
       ctx.strokeStyle = cutoffTs !== null && end.ts <= cutoffTs
-        ? config.colors.label       // historic portion
-        : config.colors.prediction; // predicted portion
-
+        ? config.colors.label
+        : config.colors.prediction;
       ctx.beginPath();
       ctx.moveTo(start.x, start.y);
       ctx.lineTo(end.x, end.y);
       ctx.stroke();
     }
 
-
     // Draw dots
     if (zoom >= config.dotsZoom && showDots) {
+      const s = config.radiusScale * 2;
       for (const pt of pts) {
         ctx.fillStyle = cutoffTs !== null && pt.ts <= cutoffTs
-          ? config.colors.label        // historic — blue
-          : config.colors.prediction;  // predicted — red
-        const s = config.radiusScale * 2;
+          ? config.colors.label
+          : config.colors.prediction;
         ctx.fillRect(pt.x - s / 2, pt.y - s / 2, s, s);
       }
     }
   }
-
-  idsInViewCallback(idsInView);
 }
 
 // ---------------------------------------------------------------------------
-// Draw polygons (EEZ outlines) — unchanged in structure
+// Draw polygons (EEZ outlines)
 // ---------------------------------------------------------------------------
 
 export function drawPolygons(
@@ -195,6 +164,8 @@ export function drawPolygons(
   config: DrawConfig,
 ) {
   const { map, canvas } = info;
+  if (!canvas) return;
+
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -209,16 +180,10 @@ export function drawPolygons(
 
     if (level.outline.points.length > 0) {
       ctx.beginPath();
-      const start = map.latLngToContainerPoint([
-        level.outline.points[0].lat,
-        level.outline.points[0].lng,
-      ]);
+      const start = map.latLngToContainerPoint([level.outline.points[0].lat, level.outline.points[0].lng]);
       ctx.moveTo(start.x, start.y);
       for (let i = 1; i < level.outline.points.length; i++) {
-        const pt = map.latLngToContainerPoint([
-          level.outline.points[i].lat,
-          level.outline.points[i].lng,
-        ]);
+        const pt = map.latLngToContainerPoint([level.outline.points[i].lat, level.outline.points[i].lng]);
         ctx.lineTo(pt.x, pt.y);
       }
       ctx.closePath();
@@ -231,7 +196,6 @@ export function drawPolygons(
       for (const hole of level.holes) {
         if (!isBoundingBoxInView(hole.boundingBox, view)) continue;
         if (hole.points.length === 0) continue;
-
         ctx.beginPath();
         const start = map.latLngToContainerPoint([hole.points[0].lat, hole.points[0].lng]);
         ctx.moveTo(start.x, start.y);
@@ -258,6 +222,7 @@ export function drawGeoImage(
   info: DrawInfo,
 ) {
   const { map, canvas } = info;
+  if (!canvas) return;
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (!geoImage) return;
@@ -279,6 +244,7 @@ export function drawShipCursor(info: DrawInfo, shipImage: HTMLImageElement | nul
   if (!shipImage) return;
 
   const { map, canvas } = info;
+  if (!canvas) return;
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 

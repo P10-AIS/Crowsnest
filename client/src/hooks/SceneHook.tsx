@@ -1,5 +1,4 @@
 import { useAppContext } from '../contexts/AppContext';
-import { useInViewContext } from '../contexts/InViewContext';
 import { useLocalStorageState } from './LocalStorageState';
 
 // ---------------------------------------------------------------------------
@@ -39,7 +38,6 @@ export interface Snapshot {
 
 export const useSnapshotManager = () => {
     const appContext = useAppContext();
-    const inViewContext = useInViewContext();
     const [snapshots, setSnapshots] = useLocalStorageState<Snapshot[]>('app_snapshots', []);
 
     // ── Take snapshot ───────────────────────────────────────────────────────
@@ -65,7 +63,7 @@ export const useSnapshotManager = () => {
 
         // Serialise inView Sets → arrays
         const inViewData: Record<string, number[]> = {};
-        for (const [key, set] of Object.entries(inViewContext.modelPredictionsInView)) {
+        for (const [key, set] of Object.entries(appContext.modelPredictionsInView)) {
             inViewData[key] = Array.from(set as Set<number>);
         }
 
@@ -134,7 +132,7 @@ export const useSnapshotManager = () => {
             for (const [key, arr] of Object.entries(snapshot.inViewData)) {
                 restoredInView[key] = new Set(arr);
             }
-            inViewContext.setModelPredictionsInView(restoredInView);
+            appContext.setModelPredictionsInView(restoredInView);
         } else {
             missingKeys.push('inViewData');
         }

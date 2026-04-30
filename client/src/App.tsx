@@ -9,13 +9,11 @@ import Map3857 from './components/Map3857';
 import Map32617 from './components/Map32617';
 import TileLayer3857 from './components/TileLayer3857';
 import TileLayer32617 from './components/TileLayer32617';
-import { useInViewContext } from './contexts/InViewContext';
 import { Projection } from './types/projection';
 import ViewPanel from './components/ViewPanel';
 
 function App() {
   const appCtx = useAppContext();
-  const inViewCtx = useInViewContext();
 
   const [MapComponent, TileLayerComponent] = (() => {
     switch (appCtx.projection) {
@@ -25,20 +23,6 @@ function App() {
       default: return [Map3857, TileLayer3857];
     }
   })();
-
-  function handleTrajectoriesInView(modelName: string, idsInView: Set<number>) {
-    inViewCtx.setModelPredictionsInView(prev => {
-      const prevSet = prev[modelName];
-      if (prevSet && setsEqual(prevSet, idsInView)) return prev;
-      return { ...prev, [modelName]: idsInView };
-    });
-  }
-
-  function setsEqual(a: Set<number>, b: Set<number>) {
-    if (a.size !== b.size) return false;
-    for (const v of a) if (!b.has(v)) return false;
-    return true;
-  }
 
   return (
     <div style={{ width: '100%', height: '100vh' }}>
@@ -71,7 +55,13 @@ function App() {
             {Object.entries(appCtx.labels).map(([labelName, trajectories]) => (
               appCtx.showLabels[labelName] &&
               <CanvasLayer key={labelName} zIndex={4} drawMethod={(info) =>
-                drawTrajectories(trajectories, appCtx.showTrajectoryDots, info, appCtx.drawConfig)
+                drawTrajectories(
+                  trajectories,
+                  appCtx.disabledTrajectories[labelName] ?? new Set(),
+                  appCtx.showTrajectoryDots,
+                  info,
+                  appCtx.drawConfig,
+                )
               } />
             ))}
 
@@ -80,9 +70,9 @@ function App() {
               <CanvasLayer key={modelName} zIndex={5} drawMethod={(info) =>
                 drawPredictions(
                   predictions,
+                  appCtx.disabledTrajectories[modelName] ?? new Set(),
                   appCtx.showTrajectoryDots,
                   appCtx.historicHorizonM[modelName] ?? null,
-                  (idsInView) => handleTrajectoriesInView(modelName, idsInView),
                   info,
                   appCtx.drawConfig,
                 )

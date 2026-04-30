@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type JSX } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type JSX } from 'react';
 import type { Polygon } from '../types/Polygon';
 import type { GeoImage } from '../types/GeoImage';
 import type { DrawConfig } from '../types/DrawConfig';
@@ -63,7 +63,7 @@ export interface AppContextType {
     setShowImageOverlay: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 
     projection: Projection;
-    setProjection: (projection: Projection) => void;
+    setProjection: React.Dispatch<React.SetStateAction<Projection>>;
 
     zoom: number;
     setZoom: (zoom: number) => void;
@@ -73,6 +73,16 @@ export interface AppContextType {
 
     historicHorizonM: Record<string, number | null>;
     setHistoricHorizonM: React.Dispatch<React.SetStateAction<Record<string, number | null>>>;
+
+    modelPredictionsInView: Record<string, Set<number>>;
+    setModelPredictionsInView: React.Dispatch<React.SetStateAction<Record<string, Set<number>>>>;
+
+    labelsInView: Record<string, Set<number>>;
+    setLabelsInView: React.Dispatch<React.SetStateAction<Record<string, Set<number>>>>;
+
+    disabledTrajectories: Record<string, Set<number>>;
+    setDisabledTrajectories: React.Dispatch<React.SetStateAction<Record<string, Set<number>>>>;
+
 
 }
 
@@ -120,7 +130,28 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [labels, setLabels] = useState<Record<string, Map<number, RawTrajectory>>>({});
     const [shipSizeGuideImage, setShipSizeGuideImage] = useState<HTMLImageElement | null>(null);
     const [imageOverlays, setImageOverlays] = useState<Record<string, GeoImage>>({});
+    const [modelPredictionsInView, setModelPredictionsInView] = useState<Record<string, Set<number>>>({});
+    const [labelsInView, setLabelsInView] = useState<Record<string, Set<number>>>({});
 
+    const [disabledTrajectoriesRaw, setDisabledTrajectoriesRaw] = useLocalStorageState<Record<string, number[]>>("disabledTrajectories", {});
+
+    const disabledTrajectories = useMemo(() =>
+        Object.fromEntries(
+            Object.entries(disabledTrajectoriesRaw).map(([k, v]) => [k, new Set<number>(v)])
+        ), [disabledTrajectoriesRaw]
+    );
+
+    const setDisabledTrajectories: React.Dispatch<React.SetStateAction<Record<string, Set<number>>>> = useCallback((action) => {
+        setDisabledTrajectoriesRaw(prev => {
+            const prevAsSets = Object.fromEntries(
+                Object.entries(prev).map(([k, v]) => [k, new Set<number>(v)])
+            );
+            const next = typeof action === 'function' ? action(prevAsSets) : action;
+            return Object.fromEntries(
+                Object.entries(next).map(([k, v]) => [k, Array.from(v)])
+            );
+        });
+    }, []);
 
     const value: AppContextType = {
         polygonsDK: polygonsDK,
@@ -188,6 +219,15 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
 
         historicHorizonM,
         setHistoricHorizonM,
+
+        modelPredictionsInView,
+        setModelPredictionsInView,
+
+        labelsInView,
+        setLabelsInView,
+
+        disabledTrajectories,
+        setDisabledTrajectories,
     };
 
     return (

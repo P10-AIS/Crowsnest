@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { useAppContext } from "../contexts/AppContext";
 import { IoMdCog, IoMdClose } from "react-icons/io";
-import { useInViewContext } from "../contexts/InViewContext";
 import { Projection } from "../types/projection";
 import CollapsibleSection from "./CollapsibleSection";
 
 function SettingsPanel() {
     const ctx = useAppContext();
-    const inViewCtx = useInViewContext();
     const [hidden, setHidden] = useState(true);
     const [refreshingBackend, setRefreshingBackend] = useState(false);
 
@@ -16,7 +14,7 @@ function SettingsPanel() {
             ...ctx.showModelPredictions,
             [modelName]: checked
         })
-        inViewCtx.setModelPredictionsInView(prev => {
+        ctx.setModelPredictionsInView(prev => {
             if (!checked) {
                 const newPrev = { ...prev };
                 delete newPrev[modelName];
@@ -30,6 +28,14 @@ function SettingsPanel() {
             ...ctx.showLabels,
             [labelName]: checked
         })
+        ctx.setLabelsInView(prev => {
+            if (!checked) {
+                const newPrev = { ...prev };
+                delete newPrev[labelName];
+                return newPrev;
+            }
+            return prev;
+        });
     }
 
     async function handleRefreshBackend() {
@@ -286,6 +292,12 @@ function SettingsPanel() {
                         <hr className="border-slate-300"></hr>
                         <button onClick={handleRefreshBackend} className="rounded bg-blue-600 text-white py-2 px-4 hover:bg-blue-700 transition-colors" disabled={refreshingBackend}>
                             {refreshingBackend ? "Refreshing..." : "Refresh backend"}
+                        </button>
+                        <button
+                            onClick={() => { localStorage.clear(); window.location.reload(); }}
+                            className="rounded bg-red-600 text-white py-2 px-4 hover:bg-red-700 transition-colors"
+                        >
+                            Clear Local Storage
                         </button>
                     </div>
                 )
