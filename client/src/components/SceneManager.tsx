@@ -41,12 +41,10 @@ export default function SceneManager() {
             )}
 
             {!hidden && (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col space-y-2">
                     {/* Header */}
-                    <div className="flex flex-row items-center justify-between border-b pb-2">
-                        <div className="font-bold flex items-center gap-2">
-                            <IoIosBookmark /> Scene Manager
-                        </div>
+                    <div className="flex flex-row items-center justify-between sticky top-0 bg-white pb-1">
+                        <div className="font-bold">Scene Manager</div>
                         <button
                             className="hover:rotate-90 hover:scale-110 transition-transform hover:cursor-pointer hover:text-red-600"
                             onClick={() => setHidden(true)}
@@ -54,6 +52,8 @@ export default function SceneManager() {
                             <IoMdClose size={24} />
                         </button>
                     </div>
+
+                    <hr className="border-slate-300" />
 
                     {/* Wrap the entire block in a null check */}
                     {restoreStatus && (
@@ -119,7 +119,7 @@ export default function SceneManager() {
                         />
                         <button
                             onClick={handleSave}
-                            className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                            className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
                             disabled={!snapshotName.trim()}
                         >
                             <IoIosSave size={18} />

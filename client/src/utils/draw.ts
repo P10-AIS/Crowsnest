@@ -150,6 +150,16 @@ export function drawPredictions(
         ctx.fillRect(pt.x - s / 2, pt.y - s / 2, s, s);
       }
     }
+
+    const markerSize = config.radiusScale * 1.5;
+    const offset = config.radiusScale * 0.75;
+    const first = pts[0];
+    const last = pts[pts.length - 1];
+
+    ctx.fillStyle = config.colors.start;
+    ctx.fillRect(first.x - offset, first.y - offset, markerSize, markerSize);
+    ctx.fillStyle = config.colors.end;
+    ctx.fillRect(last.x - offset, last.y - offset, markerSize, markerSize);
   }
 }
 
