@@ -7,10 +7,6 @@ import eezDataUS from '../assets/eezUS.json';
 import type { GeoImage } from "../types/GeoImage";
 import shipPng from "../assets/boat.png";
 
-// ---------------------------------------------------------------------------
-// Image loader
-// ---------------------------------------------------------------------------
-
 async function fetchMapImage(imageName: string): Promise<GeoImage> {
     const response = await fetch(`/api/image/${imageName}`);
     if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`);
@@ -37,11 +33,6 @@ async function fetchMapImage(imageName: string): Promise<GeoImage> {
     });
 }
 
-// ---------------------------------------------------------------------------
-// DataLoader — handles one-time static data only.
-// Trajectory loading is now done in MapController via useLoadTrajectories.
-// ---------------------------------------------------------------------------
-
 function DataLoader({ children }: { children: JSX.Element }) {
     const ctx = useAppContext();
 
@@ -53,6 +44,7 @@ function DataLoader({ children }: { children: JSX.Element }) {
                     fetch("/api/labels").then(r => r.json()),
                 ]);
 
+                // Register prediction toggles (default off)
                 ctx.setShowModelPredictions(prev => {
                     const updates: Record<string, boolean> = {};
                     for (const name of Object.keys(predRes)) {
@@ -61,6 +53,7 @@ function DataLoader({ children }: { children: JSX.Element }) {
                     return Object.keys(updates).length ? { ...prev, ...updates } : prev;
                 });
 
+                // Register label toggles (default off)
                 ctx.setShowLabels(prev => {
                     const updates: Record<string, boolean> = {};
                     for (const name of Object.keys(labelRes)) {
@@ -69,6 +62,7 @@ function DataLoader({ children }: { children: JSX.Element }) {
                     return Object.keys(updates).length ? { ...prev, ...updates } : prev;
                 });
 
+                // Historic horizon
                 ctx.setHistoricHorizonM(prev => {
                     const updates: Record<string, number | null> = {};
                     for (const name of Object.keys(predRes)) {
@@ -76,6 +70,37 @@ function DataLoader({ children }: { children: JSX.Element }) {
                     }
                     return Object.keys(updates).length ? { ...prev, ...updates } : prev;
                 });
+
+                // Force counts
+                ctx.setNumForces(prev => {
+                    const updates: Record<string, number> = {};
+                    for (const name of Object.keys(predRes)) {
+                        if (!(name in prev)) updates[name] = predRes[name].num_forces ?? 0;
+                    }
+                    return Object.keys(updates).length ? { ...prev, ...updates } : prev;
+                });
+
+                // Force names
+                ctx.setForceNames(prev => {
+                    const updates: Record<string, string[]> = {};
+                    for (const name of Object.keys(predRes)) {
+                        if (!(name in prev)) updates[name] = predRes[name].force_names ?? [];
+                    }
+                    return Object.keys(updates).length ? { ...prev, ...updates } : prev;
+                });
+
+                // Force config — scale + per-component enabled, default all on
+                ctx.setForceConfig(prev => {
+                    const updates: Record<string, { scale: number; enabled: boolean[] }> = {};
+                    for (const name of Object.keys(predRes)) {
+                        if (!(name in prev)) {
+                            const n = predRes[name].num_forces ?? 0;
+                            updates[name] = { scale: 20, enabled: new Array(n).fill(true) };
+                        }
+                    }
+                    return Object.keys(updates).length ? { ...prev, ...updates } : prev;
+                });
+
             } catch (err) {
                 console.error("Failed to discover model/dataset names:", err);
             }
@@ -107,7 +132,6 @@ function DataLoader({ children }: { children: JSX.Element }) {
                 for (const imageName of data.images) {
                     try {
                         const image = await fetchMapImage(imageName);
-                        console.log("Image bounds:", image.area);
                         ctx.setImageOverlays(prev => ({ ...prev, [imageName]: image }));
                     } catch (err) {
                         console.error(`Failed to load image ${imageName}:`, err);

@@ -70,9 +70,12 @@ function App() {
               <CanvasLayer key={modelName} zIndex={5} drawMethod={(info) =>
                 drawPredictions(
                   predictions,
-                  appCtx.disabledTrajectories[modelName] ?? new Set(),
+                  appCtx.modelForces[modelName] ?? new Map(),
+                  appCtx.disabledTrajectories[modelName] ?? new Set<number>(),
                   appCtx.showTrajectoryDots,
                   appCtx.historicHorizonM[modelName] ?? null,
+                  appCtx.forceConfig[modelName]?.enabled ?? [],
+                  appCtx.forceScale,
                   info,
                   appCtx.drawConfig,
                 )

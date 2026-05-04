@@ -1,10 +1,6 @@
 import { useCallback, useRef } from "react";
 import { useAppContext } from "../contexts/AppContext";
-import type { RawTrajectory } from "../utils/draw";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import type { RawForces, RawTrajectory } from "../utils/draw";
 
 export interface Viewport {
     latMin: number;
@@ -14,18 +10,12 @@ export interface Viewport {
     zoom: number;
 }
 
-// How many trajectories to collect before flushing to React state.
-// Higher = fewer redraws during streaming, but trajectories appear in larger chunks.
 const BATCH_SIZE = 50;
-
-// ---------------------------------------------------------------------------
-// NDJSON streaming
-// ---------------------------------------------------------------------------
 
 async function streamTrajectories(
     url: string,
     onHeader: (source: string, total: number) => void,
-    onTrajectory: (pts: RawTrajectory, idx: number) => void,
+    onTrajectory: (pts: RawTrajectory, idx: number, forces: RawForces | null) => void,
     signal: AbortSignal,
 ): Promise<void> {
     const response = await fetch(url, { signal });
@@ -50,7 +40,7 @@ async function streamTrajectories(
             try {
                 const msg = JSON.parse(trimmed);
                 if (msg.type === "header") onHeader(msg.source, msg.total);
-                else if (msg.type === "traj") onTrajectory(msg.pts, msg.i);
+                else if (msg.type === "traj") onTrajectory(msg.pts, msg.i, msg.forces ?? null);
             } catch {
                 console.warn("Failed to parse NDJSON line:", trimmed);
             }
@@ -70,18 +60,15 @@ function buildQuery(vp: Viewport, density: number, totalCount: number, fullFidel
     }).toString();
 }
 
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
-
 export function useLoadTrajectories() {
     const {
         setModelPredictions,
+        setModelForces,
         setLabels,
         showModelPredictions,
         showLabels,
         trajectoryDensity,
-        fullFidelity: fullTrajectoryFidelity,
+        fullFidelity,
     } = useAppContext();
 
     const abortRefs = useRef<Map<string, AbortController>>(new Map());
@@ -92,7 +79,7 @@ export function useLoadTrajectories() {
         }
         abortRefs.current.clear();
 
-        let predRes: Record<string, { count: number }> = {};
+        let predRes: Record<string, { count: number; num_forces: number }> = {};
         let labelRes: Record<string, { count: number }> = {};
 
         try {
@@ -113,18 +100,27 @@ export function useLoadTrajectories() {
             const controller = new AbortController();
             abortRefs.current.set(`pred:${modelName}`, controller);
 
-            const query = buildQuery(viewport, trajectoryDensity, predRes[modelName].count, fullTrajectoryFidelity);
+            const query = buildQuery(viewport, trajectoryDensity, predRes[modelName].count, fullFidelity);
 
             const receivedIds = new Set<number>();
-            const batch = new Map<number, RawTrajectory>();
+            const trajBatch = new Map<number, RawTrajectory>();
+            const forcesBatch = new Map<number, RawForces | null>();
 
             const flush = () => {
-                if (batch.size === 0) return;
-                const snapshot = new Map(batch);
-                batch.clear();
+                if (trajBatch.size === 0) return;
+                const trajSnap = new Map(trajBatch);
+                const forcesSnap = new Map(forcesBatch);
+                trajBatch.clear();
+                forcesBatch.clear();
+
                 setModelPredictions(prev => {
                     const next = new Map(prev[modelName] ?? []);
-                    for (const [idx, pts] of snapshot) next.set(idx, pts);
+                    for (const [idx, pts] of trajSnap) next.set(idx, pts);
+                    return { ...prev, [modelName]: next };
+                });
+                setModelForces(prev => {
+                    const next = new Map(prev[modelName] ?? []);
+                    for (const [idx, f] of forcesSnap) next.set(idx, f);
                     return { ...prev, [modelName]: next };
                 });
             };
@@ -132,26 +128,27 @@ export function useLoadTrajectories() {
             streamTrajectories(
                 `/api/predictions/${modelName}?${query}`,
                 (_source, _total) => { },
-                (pts, idx) => {
+                (pts, idx, forces) => {
                     receivedIds.add(idx);
-                    batch.set(idx, pts);
-                    if (batch.size >= BATCH_SIZE) flush();
+                    trajBatch.set(idx, pts);
+                    forcesBatch.set(idx, forces);
+                    if (trajBatch.size >= BATCH_SIZE) flush();
                 },
                 controller.signal,
             ).then(() => {
-                flush(); // flush any remaining in the batch
-                // Prune trajectories no longer in the viewport
+                flush();
                 setModelPredictions(prev => {
                     const next = new Map(prev[modelName] ?? []);
-                    for (const key of next.keys()) {
-                        if (!receivedIds.has(key)) next.delete(key);
-                    }
+                    for (const key of next.keys()) if (!receivedIds.has(key)) next.delete(key);
+                    return { ...prev, [modelName]: next };
+                });
+                setModelForces(prev => {
+                    const next = new Map(prev[modelName] ?? []);
+                    for (const key of next.keys()) if (!receivedIds.has(key)) next.delete(key);
                     return { ...prev, [modelName]: next };
                 });
             }).catch(err => {
-                if (err.name !== "AbortError") {
-                    console.error(`Failed streaming predictions '${modelName}':`, err);
-                }
+                if (err.name !== "AbortError") console.error(`Failed streaming predictions '${modelName}':`, err);
             });
         }
 
@@ -163,7 +160,7 @@ export function useLoadTrajectories() {
             const controller = new AbortController();
             abortRefs.current.set(`label:${datasetName}`, controller);
 
-            const query = buildQuery(viewport, trajectoryDensity, labelRes[datasetName].count, fullTrajectoryFidelity);
+            const query = buildQuery(viewport, trajectoryDensity, labelRes[datasetName].count, fullFidelity);
 
             const receivedIds = new Set<number>();
             const batch = new Map<number, RawTrajectory>();
@@ -182,7 +179,7 @@ export function useLoadTrajectories() {
             streamTrajectories(
                 `/api/labels/${datasetName}?${query}`,
                 (_source, _total) => { },
-                (pts, idx) => {
+                (pts, idx, _forces) => {
                     receivedIds.add(idx);
                     batch.set(idx, pts);
                     if (batch.size >= BATCH_SIZE) flush();
@@ -192,23 +189,20 @@ export function useLoadTrajectories() {
                 flush();
                 setLabels(prev => {
                     const next = new Map(prev[datasetName] ?? []);
-                    for (const key of next.keys()) {
-                        if (!receivedIds.has(key)) next.delete(key);
-                    }
+                    for (const key of next.keys()) if (!receivedIds.has(key)) next.delete(key);
                     return { ...prev, [datasetName]: next };
                 });
             }).catch(err => {
-                if (err.name !== "AbortError") {
-                    console.error(`Failed streaming labels '${datasetName}':`, err);
-                }
+                if (err.name !== "AbortError") console.error(`Failed streaming labels '${datasetName}':`, err);
             });
         }
     }, [
         setModelPredictions,
+        setModelForces,
         setLabels,
         showModelPredictions,
         showLabels,
         trajectoryDensity,
-        fullTrajectoryFidelity,
+        fullFidelity,
     ]);
 }

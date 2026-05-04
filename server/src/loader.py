@@ -23,14 +23,15 @@ def _bbox_from_points(points: np.ndarray) -> tuple[float, float, float, float]:
     )
 
 
-def _make_trajectory(points: np.ndarray) -> Trajectory:
+def _make_trajectory(points: np.ndarray, forces: np.ndarray | None = None) -> Trajectory:
     lat_min, lat_max, lon_min, lon_max = _bbox_from_points(points)
     return Trajectory(
-        points=points.astype(np.float32),  # halves memory vs float64
+        points=points.astype(np.float32),
         lat_min=lat_min,
         lat_max=lat_max,
         lon_min=lon_min,
         lon_max=lon_max,
+        forces=forces.astype(np.float32) if forces is not None else None,
     )
 
 
@@ -39,9 +40,6 @@ def _make_trajectory(points: np.ndarray) -> Trajectory:
 # ---------------------------------------------------------------------------
 
 def load_all_predictions(directory: str = "Predictions") -> dict[str, TrajectoryStore]:
-    """
-    Returns {model_name: TrajectoryStore} for every .npz in the directory.
-    """
     stores: dict[str, TrajectoryStore] = {}
 
     if not os.path.exists(directory):
@@ -66,6 +64,7 @@ def load_all_predictions(directory: str = "Predictions") -> dict[str, Trajectory
                 lats = data.get("lats")
                 lons = data.get("lons")
                 timestamps = data.get("timestamps")
+
                 if "historic_horizon_m" in data:
                     raw = data["historic_horizon_m"]
                     try:
@@ -75,23 +74,38 @@ def load_all_predictions(directory: str = "Predictions") -> dict[str, Trajectory
                 else:
                     historic_horizon_m = None
 
+                # Forces: (N, T, F, 2) or missing/empty
+                forces_raw = data.get("forces")
+                has_forces = (
+                    forces_raw is not None
+                    and forces_raw.ndim == 4
+                    and forces_raw.size > 0
+                )
+                num_forces = int(forces_raw.shape[2]) if has_forces else 0
+
                 if lats is None or lons is None or timestamps is None:
                     print(
                         f"  Skipping {filename}: missing lats/lons/timestamps")
                     continue
 
-                # Stack → (N, seq_len, 3): [lat, lon, timestamp]
                 stacked = np.stack((lats, lons, timestamps), axis=2)
                 n_traj = stacked.shape[0]
 
                 store = TrajectoryStore(
-                    name=model_name, historic_horizon_m=historic_horizon_m)
+                    name=model_name,
+                    historic_horizon_m=historic_horizon_m,
+                    num_forces=num_forces,
+                )
+
                 for i in range(n_traj):
-                    store.trajectories.append(_make_trajectory(stacked[i]))
+                    # (T, F, 2)
+                    traj_forces = forces_raw[i] if has_forces else None
+                    store.trajectories.append(
+                        _make_trajectory(stacked[i], traj_forces))
 
                 stores[model_name] = store
                 print(
-                    f"  Loaded predictions '{model_name}': {n_traj} trajectories")
+                    f"  Loaded predictions '{model_name}': {n_traj} trajectories, {num_forces} force components")
 
         except Exception as e:
             print(f"  Error loading {filename}: {e}")
@@ -104,9 +118,6 @@ def load_all_predictions(directory: str = "Predictions") -> dict[str, Trajectory
 # ---------------------------------------------------------------------------
 
 def load_all_labels(data_dir: str = "Data/DatasetTraj") -> dict[str, TrajectoryStore]:
-    """
-    Returns {dataset_name: TrajectoryStore} for every combined*.npz in data_dir.
-    """
     stores: dict[str, TrajectoryStore] = {}
 
     if not os.path.exists(data_dir):
@@ -128,30 +139,23 @@ def load_all_labels(data_dir: str = "Data/DatasetTraj") -> dict[str, TrajectoryS
 
         try:
             with np.load(path, allow_pickle=True) as data:
-                # flat_trajectories: (total_points, 6)
-                # columns: timestamp(0), lat(1), lon(2), cog(3), sog(4), vessel(5)
                 flat = data["trajectories"]
                 trajectory_idxes: list[int] = pickle.loads(
-                    data["trajectory_idxes"].item()
-                )
+                    data["trajectory_idxes"].item())
 
             store = TrajectoryStore(name=dataset_name)
-
-            # Split flat array into per-trajectory segments
             split_indices = trajectory_idxes[1:]
             segments = np.split(flat, split_indices)
 
             for seg in segments:
                 if len(seg) == 0:
                     continue
-                # Reorder columns to [lat, lon, timestamp]
                 points = seg[:, [1, 2, 0]].astype(np.float32)
                 store.trajectories.append(_make_trajectory(points))
 
             stores[dataset_name] = store
             print(
-                f"  Loaded labels '{dataset_name}': {len(store.trajectories)} trajectories"
-            )
+                f"  Loaded labels '{dataset_name}': {len(store.trajectories)} trajectories")
 
         except Exception as e:
             print(f"  Error loading {filename}: {e}")

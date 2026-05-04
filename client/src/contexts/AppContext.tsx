@@ -4,7 +4,7 @@ import type { GeoImage } from '../types/GeoImage';
 import type { DrawConfig } from '../types/DrawConfig';
 import { Projection } from '../types/projection';
 import type { ImageOpacities } from '../types/Opacity';
-import type { RawTrajectory } from '../utils/draw';
+import type { RawForces, RawTrajectory } from '../utils/draw';
 import { useLocalStorageState } from '../hooks/LocalStorageState';
 
 export interface AppContextType {
@@ -31,6 +31,21 @@ export interface AppContextType {
 
     modelPredictions: Record<string, Map<number, RawTrajectory>>;
     setModelPredictions: React.Dispatch<React.SetStateAction<Record<string, Map<number, RawTrajectory>>>>;
+
+    modelForces: Record<string, Map<number, RawForces | null>>;
+    setModelForces: React.Dispatch<React.SetStateAction<Record<string, Map<number, RawForces | null>>>>;
+
+    forceConfig: Record<string, { enabled: boolean[] }>;
+    setForceConfig: React.Dispatch<React.SetStateAction<Record<string, { enabled: boolean[] }>>>;
+
+    forceScale: number;
+    setForceScale: (scale: number) => void;
+
+    numForces: Record<string, number>;
+    setNumForces: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+
+    forceNames: Record<string, string[]>;
+    setForceNames: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
 
     showLabels: Record<string, boolean>;
     setShowLabels: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
@@ -82,8 +97,6 @@ export interface AppContextType {
 
     disabledTrajectories: Record<string, Set<number>>;
     setDisabledTrajectories: React.Dispatch<React.SetStateAction<Record<string, Set<number>>>>;
-
-
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -104,6 +117,7 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [center, setCenter] = useLocalStorageState<[number, number]>("center", [56.15674, 10.21076]);
     const [imageOpacities, setImageOpacities] = useLocalStorageState("imageOpacities", {});
     const [historicHorizonM, setHistoricHorizonM] = useLocalStorageState("historicHorizonM", {});
+    const [forceScale, setForceScale] = useLocalStorageState("forceScale", 20);
     const [drawConfig, setDrawConfig] = useLocalStorageState<DrawConfig>("drawConfig", {
         colors: {
             label: "rgba(0,100,255)",
@@ -118,7 +132,7 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
         dashPattern: [4, 4],
         numZoomLevels: 5,
         trajectorySimplificationThresholds: {
-            [Projection.EPSG3034]: 7, //zoomlevel where we begin to simplify (zooming out from here will be a more simple version of the trajectory)
+            [Projection.EPSG3034]: 7,
             [Projection.EPSG3857]: 11,
             [Projection.EPSG32617]: 10,
         }
@@ -127,6 +141,10 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [polygonsDK, setPolygonsDK] = useState<Polygon[]>([]);
     const [polygonsUS, setPolygonsUS] = useState<Polygon[]>([]);
     const [modelPredictions, setModelPredictions] = useState<Record<string, Map<number, RawTrajectory>>>({});
+    const [modelForces, setModelForces] = useState<Record<string, Map<number, RawForces | null>>>({});
+    const [forceConfig, setForceConfig] = useState<Record<string, { enabled: boolean[] }>>({});
+    const [numForces, setNumForces] = useState<Record<string, number>>({});
+    const [forceNames, setForceNames] = useState<Record<string, string[]>>({});
     const [labels, setLabels] = useState<Record<string, Map<number, RawTrajectory>>>({});
     const [shipSizeGuideImage, setShipSizeGuideImage] = useState<HTMLImageElement | null>(null);
     const [imageOverlays, setImageOverlays] = useState<Record<string, GeoImage>>({});
@@ -154,80 +172,36 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     }, []);
 
     const value: AppContextType = {
-        polygonsDK: polygonsDK,
-        setPolygonsDK: setPolygonsDK,
-
-        polygonsUS: polygonsUS,
-        setPolygonsUS: setPolygonsUS,
-
-        eezDKOutlineVisible: eezDKOutlineVisible,
-        setEezDKOutlineVisible: setDKEezOutlineVisible,
-
-        eezUSOutlineVisible: eezUSOutlineVisible,
-        setEezUSOutlineVisible: setEezUSOutlineVisible,
-
-        fullFidelity: fullTrajectoryFidelity,
-        setFullFidelity: setFullTrajectoryFidelity,
-
-        showMapTiles,
-        setShowMapTiles,
-
-        showModelPredictions,
-        setShowModelPredictions,
-
-        modelPredictions,
-        setModelPredictions,
-
-        showLabels,
-        setShowLabels,
-
-        labels,
-        setLabels,
-
-        trajectoryDensity,
-        setTrajectoryDensity,
-
-        enableShipSizeGuide,
-        setEnableShipSizeGuide,
-
-        shipSizeGuideImage,
-        setShipSizeGuideImage,
-
-        showTrajectoryDots,
-        setShowTrajectoryDots,
-
-        drawConfig,
-        setDrawConfig,
-
-        imageOverlays,
-        setImageOverlays,
-
-        imageOpacities,
-        setImageOpacities,
-
-        projection,
-        setProjection,
-
-        showImageOverlay,
-        setShowImageOverlay,
-
-        zoom,
-        setZoom,
-
-        center,
-        setCenter,
-
-        historicHorizonM,
-        setHistoricHorizonM,
-
-        modelPredictionsInView,
-        setModelPredictionsInView,
-
-        labelsInView,
-        setLabelsInView,
-
-        disabledTrajectories,
-        setDisabledTrajectories,
+        polygonsDK, setPolygonsDK,
+        polygonsUS, setPolygonsUS,
+        eezDKOutlineVisible, setEezDKOutlineVisible: setDKEezOutlineVisible,
+        eezUSOutlineVisible, setEezUSOutlineVisible,
+        fullFidelity: fullTrajectoryFidelity, setFullFidelity: setFullTrajectoryFidelity,
+        showMapTiles, setShowMapTiles,
+        showModelPredictions, setShowModelPredictions,
+        modelPredictions, setModelPredictions,
+        modelForces, setModelForces,
+        forceConfig, setForceConfig,
+        numForces, setNumForces,
+        forceNames, setForceNames,
+        showLabels, setShowLabels,
+        labels, setLabels,
+        trajectoryDensity, setTrajectoryDensity,
+        enableShipSizeGuide, setEnableShipSizeGuide,
+        shipSizeGuideImage, setShipSizeGuideImage,
+        showTrajectoryDots, setShowTrajectoryDots,
+        drawConfig, setDrawConfig,
+        imageOverlays, setImageOverlays,
+        imageOpacities, setImageOpacities,
+        projection, setProjection,
+        showImageOverlay, setShowImageOverlay,
+        zoom, setZoom,
+        center, setCenter,
+        historicHorizonM, setHistoricHorizonM,
+        modelPredictionsInView, setModelPredictionsInView,
+        labelsInView, setLabelsInView,
+        disabledTrajectories, setDisabledTrajectories,
+        forceScale, setForceScale,
     };
 
     return (

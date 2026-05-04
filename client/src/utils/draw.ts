@@ -8,6 +8,24 @@ import type { DrawInfo } from "../components/CanvasLayer";
 export type RawPoint = [number, number, number];
 // A single trajectory is an array of points
 export type RawTrajectory = RawPoint[];
+// Forces per point: (thinned_len, F, 2) — null if no forces
+export type RawForces = number[][][]; // [point_idx][force_idx][vx, vy]
+
+// Colors for up to 8 force components
+const FORCE_COLORS = [
+  "rgba(255, 200, 0, 0.9)",    // yellow
+  "rgba(0, 220, 255, 0.9)",    // cyan
+  "rgba(255, 80, 200, 0.9)",   // magenta
+  "rgba(80, 255, 120, 0.9)",   // green
+  "rgba(255, 140, 0, 0.9)",    // orange
+  "rgba(180, 80, 255, 0.9)",   // purple
+  "rgba(255, 255, 255, 0.9)",  // white
+  "rgba(255, 80, 80, 0.9)",    // red
+];
+
+export function forceColor(forceIdx: number): string {
+  return FORCE_COLORS[forceIdx % FORCE_COLORS.length];
+}
 
 // ---------------------------------------------------------------------------
 // Utilities
@@ -34,6 +52,43 @@ function metersToPixels(map: L.Map, meters: number): number {
 function viewBox(map: L.Map): Bound {
   const b = map.getBounds();
   return { minLat: b.getSouth(), maxLat: b.getNorth(), minLng: b.getWest(), maxLng: b.getEast() };
+}
+
+function drawArrow(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number,
+  vx: number, vy: number,
+  scale: number,
+  color: string,
+  config: DrawConfig,
+) {
+  const dx = vx * scale;
+  const dy = -vy * scale; // flip y — canvas y increases downward
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len < 1) return;
+
+  const headLen = Math.max(4, len * 0.3);
+  const angle = Math.atan2(dy, dx);
+
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = config.lineWidthScale;
+
+
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + dx, y + dy);
+  ctx.stroke();
+
+  const arrowTipX = x + dx + Math.cos(angle) * headLen * Math.tan(Math.PI / 6);
+  const arrowTipY = y + dy + Math.sin(angle) * headLen * Math.tan(Math.PI / 6);
+
+  ctx.beginPath();
+  ctx.moveTo(arrowTipX, arrowTipY);
+  ctx.lineTo(arrowTipX - headLen * Math.cos(angle - Math.PI / 6), arrowTipY - headLen * Math.sin(angle - Math.PI / 6));
+  ctx.lineTo(arrowTipX - headLen * Math.cos(angle + Math.PI / 6), arrowTipY - headLen * Math.sin(angle + Math.PI / 6));
+  ctx.closePath();
+  ctx.fill();
 }
 
 // ---------------------------------------------------------------------------
@@ -66,7 +121,6 @@ export function drawTrajectories(
       return { x: p.x, y: p.y };
     });
 
-    // Draw line
     ctx.beginPath();
     ctx.strokeStyle = config.colors.label;
     ctx.lineWidth = config.lineWidthScale;
@@ -75,14 +129,12 @@ export function drawTrajectories(
     for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
     ctx.stroke();
 
-    // Draw dots
     if (zoom >= config.dotsZoom && showDots) {
       const s = config.radiusScale * 2;
       ctx.fillStyle = config.colors.label;
       for (const pt of pts) ctx.fillRect(pt.x - s / 2, pt.y - s / 2, s, s);
     }
 
-    // Start / end markers
     ctx.fillStyle = config.colors.start;
     ctx.fillRect(pts[0].x - offset, pts[0].y - offset, markerSize, markerSize);
     ctx.fillStyle = config.colors.end;
@@ -96,9 +148,12 @@ export function drawTrajectories(
 
 export function drawPredictions(
   predictions: Map<number, RawTrajectory>,
+  forces: Map<number, RawForces | null>,
   disabled: Set<number>,
   showDots: boolean,
   historicHorizonMinutes: number | null,
+  enabledForces: boolean[],
+  forceScale: number,
   info: DrawInfo,
   config: DrawConfig,
 ) {
@@ -111,6 +166,9 @@ export function drawPredictions(
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const zoom = map.getZoom();
+  const markerSize = config.radiusScale * 1.5;
+  const offset = config.radiusScale * 0.75;
+  const showForces = forceScale > 0 && enabledForces.some(Boolean);
 
   for (const [idx, traj] of predictions.entries()) {
     if (disabled.has(idx)) continue;
@@ -126,7 +184,7 @@ export function drawPredictions(
       ? baseTs + historicHorizonMinutes * 60
       : null;
 
-    // Draw segments
+    // Segments
     ctx.lineWidth = config.lineWidthScale;
     for (let i = 1; i < pts.length; i++) {
       const start = pts[i - 1];
@@ -140,7 +198,7 @@ export function drawPredictions(
       ctx.stroke();
     }
 
-    // Draw dots
+    // Dots
     if (zoom >= config.dotsZoom && showDots) {
       const s = config.radiusScale * 2;
       for (const pt of pts) {
@@ -151,15 +209,27 @@ export function drawPredictions(
       }
     }
 
-    const markerSize = config.radiusScale * 1.5;
-    const offset = config.radiusScale * 0.75;
-    const first = pts[0];
-    const last = pts[pts.length - 1];
-
+    // Start / end markers
     ctx.fillStyle = config.colors.start;
-    ctx.fillRect(first.x - offset, first.y - offset, markerSize, markerSize);
+    ctx.fillRect(pts[0].x - offset, pts[0].y - offset, markerSize, markerSize);
     ctx.fillStyle = config.colors.end;
-    ctx.fillRect(last.x - offset, last.y - offset, markerSize, markerSize);
+    ctx.fillRect(pts[pts.length - 1].x - offset, pts[pts.length - 1].y - offset, markerSize, markerSize);
+
+    // Force arrows
+    if (showForces) {
+      const trajForces = forces.get(idx);
+      if (trajForces) {
+        for (let pi = 0; pi < pts.length; pi++) {
+          const ptForces = trajForces[pi];
+          if (!ptForces) continue;
+          for (let fi = 0; fi < ptForces.length; fi++) {
+            if (!enabledForces[fi]) continue;
+            const [vx, vy] = ptForces[fi];
+            drawArrow(ctx, pts[pi].x, pts[pi].y, vx, vy, forceScale, forceColor(fi), config);
+          }
+        }
+      }
+    }
   }
 }
 
