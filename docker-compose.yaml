@@ -15,7 +15,7 @@ services:
       dockerfile: ./Dockerfile
     restart: unless-stopped
     env_file:
-      - ./server/src/.env
+      - ./server/.env
     volumes:
-      - /mnt/dataimputationgroup/Crate/Data:/app/server/Data
-      - /mnt/dataimputationgroup/TRAIT/Predictions:/app/server/Predictions
+      - /mnt/dataimputationgroup/Crate/Data:/app/Data
+      - /mnt/dataimputationgroup/TRAIT/Predictions:/app/Predictions
