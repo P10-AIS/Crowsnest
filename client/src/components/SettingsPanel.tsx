@@ -73,7 +73,7 @@ function SettingsPanel() {
                         const projValue = Projection[projKey as keyof typeof Projection];
                         return (
                             <div className="flex flex-row items-center justify-between" key={projValue}>
-                                <div>{projValue}</div>
+                                <span className="font-mono text-xs text-slate-600">{projValue}</span>
                                 <input type="radio" name="projection" checked={ctx.projection === projValue} onChange={() => ctx.setProjection(projValue)} />
                             </div>
                         );
@@ -103,7 +103,6 @@ function SettingsPanel() {
 
                     <hr className="border-slate-300" />
 
-                    {/* Sliders */}
                     {(
                         [
                             { label: "Dot Radius", key: "radiusScale", min: 1, max: 10, step: 1 },
@@ -113,18 +112,17 @@ function SettingsPanel() {
                         <div key={key} className="flex flex-col">
                             <div className="flex flex-row justify-between">
                                 <div>{label}</div>
-                                <div>{ctx.drawConfig[key]}</div>
+                                <span className="font-mono text-slate-500">{ctx.drawConfig[key]}</span>
                             </div>
                             <input type="range" min={min} max={max} step={step} value={ctx.drawConfig[key]}
                                 onChange={(e) => ctx.setDrawConfig({ ...ctx.drawConfig, [key]: Number(e.target.value) })} />
                         </div>
                     ))}
 
-                    {/* Global force scale */}
                     <div className="flex flex-col">
                         <div className="flex flex-row justify-between">
                             <div>Force Scale</div>
-                            <div>{ctx.forceScale}</div>
+                            <span className="font-mono text-slate-500">{ctx.forceScale}</span>
                         </div>
                         <input type="range" min={0} max={100} step={1} value={ctx.forceScale}
                             onChange={(e) => ctx.setForceScale(Number(e.target.value))} />
@@ -133,7 +131,7 @@ function SettingsPanel() {
                     <div className="flex flex-col">
                         <div className="flex flex-row justify-between">
                             <div>Trajectory Density</div>
-                            <div>{ctx.trajectoryDensity}</div>
+                            <span className="font-mono text-slate-500">{ctx.trajectoryDensity}</span>
                         </div>
                         <input type="range" min={0} max={1} step={0.01} value={ctx.trajectoryDensity}
                             onChange={(e) => ctx.setTrajectoryDensity(parseFloat(e.target.value))} />
@@ -157,7 +155,7 @@ function SettingsPanel() {
                     <CollapsibleSection title="Labels">
                         {Object.keys(ctx.showLabels).map(labelName => (
                             <div key={labelName} className="flex flex-row items-center justify-between">
-                                <div className="truncate">{labelName}</div>
+                                <span className="font-mono text-xs truncate">{labelName}</span>
                                 <input type="checkbox" className="ml-2 flex-shrink-0"
                                     checked={ctx.showLabels[labelName] || false}
                                     onChange={(e) => handleToggleLabel(e.target.checked, labelName)}
@@ -176,16 +174,14 @@ function SettingsPanel() {
 
                             return (
                                 <div key={modelName} className="flex flex-col space-y-2 pb-3 border-b border-slate-200 last:border-0 last:pb-0">
-                                    {/* Model toggle */}
                                     <div className="flex flex-row items-center justify-between">
-                                        <div className="truncate font-medium">{modelName}</div>
+                                        <span className="font-mono text-xs font-medium truncate">{modelName}</span>
                                         <input type="checkbox" className="ml-2 flex-shrink-0"
                                             checked={ctx.showModelPredictions[modelName] || false}
                                             onChange={(e) => handleTogglePrediction(e.target.checked, modelName)}
                                         />
                                     </div>
 
-                                    {/* Force component toggles */}
                                     {nForces > 0 && cfg && (
                                         <div className="flex flex-col space-y-1">
                                             {Array.from({ length: nForces }).map((_, fi) => (
@@ -196,7 +192,7 @@ function SettingsPanel() {
                                                                 className="w-3 h-3 rounded-sm flex-shrink-0"
                                                                 style={{ backgroundColor: forceColor(fi) }}
                                                             />
-                                                            <span className="text-xs font-medium text-gray-700 truncate">
+                                                            <span className="font-mono text-xs text-gray-700 truncate">
                                                                 {names[fi] ?? `Force ${fi}`}
                                                             </span>
                                                         </div>
@@ -224,7 +220,7 @@ function SettingsPanel() {
                             return (
                                 <div key={name} className="flex flex-col p-2 bg-white rounded border border-gray-200 hover:border-blue-400 transition-all">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-medium text-gray-700 truncate cursor-help" title={name}>
+                                        <span className="font-mono text-xs text-gray-700 truncate cursor-help" title={name}>
                                             {name}
                                         </span>
                                         <input
@@ -242,7 +238,7 @@ function SettingsPanel() {
                                             value={ctx.imageOpacities[name] ?? 1}
                                             onChange={(e) => ctx.setImageOpacities(prev => ({ ...prev, [name]: parseFloat(e.target.value) }))}
                                         />
-                                        <span className="text-xs font-mono text-gray-500 w-8">
+                                        <span className="font-mono text-xs text-gray-500 w-8">
                                             {Math.round((ctx.imageOpacities[name] || 1) * 100)}%
                                         </span>
                                     </div>

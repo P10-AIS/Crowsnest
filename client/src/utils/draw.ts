@@ -170,6 +170,8 @@ export function drawPredictions(
   const offset = config.radiusScale * 0.75;
   const showForces = forceScale > 0 && enabledForces.some(Boolean);
 
+  // print force and point of traj 10 point 150 for debugging
+
   for (const [idx, traj] of predictions.entries()) {
     if (disabled.has(idx)) continue;
     if (!traj || traj.length === 0) continue;
@@ -201,10 +203,15 @@ export function drawPredictions(
     // Dots
     if (zoom >= config.dotsZoom && showDots) {
       const s = config.radiusScale * 2;
+      // let i = 0;
       for (const pt of pts) {
         ctx.fillStyle = cutoffTs !== null && pt.ts <= cutoffTs
           ? config.colors.label
           : config.colors.prediction;
+
+        // if (idx === 10 && i++ === 150) {
+        //   ctx.fillStyle = "rgb(0, 0, 0)";
+        // }
         ctx.fillRect(pt.x - s / 2, pt.y - s / 2, s, s);
       }
     }
@@ -222,6 +229,17 @@ export function drawPredictions(
         for (let pi = 0; pi < pts.length; pi++) {
           const ptForces = trajForces[pi];
           if (!ptForces) continue;
+
+          // if (idx === 10 && pi === 150) {
+          //   console.log(`=== Traj ${idx} Point ${pi} ===`);
+          //   console.log(`lat/lon: ${traj[pi][0]}, ${traj[pi][1]}`);
+          //   console.log(`canvas xy: ${pts[pi].x}, ${pts[pi].y}`);
+          //   ptForces.forEach((f, fi) => {
+          //     console.log(`Force ${fi} (${forceColor(fi)}): vx=${f[0].toFixed(4)}, vy=${f[1].toFixed(4)}`);
+          //   });
+          // }
+
+
           for (let fi = 0; fi < ptForces.length; fi++) {
             if (!enabledForces[fi]) continue;
             const [vx, vy] = ptForces[fi];

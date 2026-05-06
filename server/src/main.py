@@ -33,7 +33,7 @@ http_client: httpx.AsyncClient
 IMAGES_FOLDER = "Data/Images"
 
 # Placeholder force names until stored in dataset
-FORCE_NAMES = ["Wind", "Current", "Traffic", "Force 4",
+FORCE_NAMES = ["Traffic", "Depth", "Current", "Force 4",
                "Force 5", "Force 6", "Force 7", "Force 8"]
 
 
