@@ -86,8 +86,8 @@ export interface AppContextType {
     center: [number, number];
     setCenter: (latlng: [number, number]) => void;
 
-    historicHorizonM: Record<string, number | null>;
-    setHistoricHorizonM: React.Dispatch<React.SetStateAction<Record<string, number | null>>>;
+    numHistoricTokens: Record<string, number | null>;
+    setNumHistoricTokens: React.Dispatch<React.SetStateAction<Record<string, number | null>>>;
 
     modelPredictionsInView: Record<string, Set<number>>;
     setModelPredictionsInView: React.Dispatch<React.SetStateAction<Record<string, Set<number>>>>;
@@ -116,7 +116,7 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
     const [zoom, setZoom] = useLocalStorageState("zoom", 5);
     const [center, setCenter] = useLocalStorageState<[number, number]>("center", [56.15674, 10.21076]);
     const [imageOpacities, setImageOpacities] = useLocalStorageState("imageOpacities", {});
-    const [historicHorizonM, setHistoricHorizonM] = useLocalStorageState("historicHorizonM", {});
+    const [numHistoricTokens, setNumHistoricTokens] = useLocalStorageState("numHistoricTokens", {});
     const [forceScale, setForceScale] = useLocalStorageState("forceScale", 20);
     const [drawConfig, setDrawConfig] = useLocalStorageState<DrawConfig>("drawConfig", {
         colors: {
@@ -197,7 +197,7 @@ export const AppProvider = ({ children }: { children: JSX.Element }) => {
         showImageOverlay, setShowImageOverlay,
         zoom, setZoom,
         center, setCenter,
-        historicHorizonM, setHistoricHorizonM,
+        numHistoricTokens, setNumHistoricTokens,
         modelPredictionsInView, setModelPredictionsInView,
         labelsInView, setLabelsInView,
         disabledTrajectories, setDisabledTrajectories,

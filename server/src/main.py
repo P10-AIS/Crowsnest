@@ -145,7 +145,7 @@ async def list_predictions():
     return {
         name: {
             "count": len(store.trajectories),
-            "historic_horizon_m": store.historic_horizon_m,
+            "num_historic_tokens": store.num_historic_tokens,
             "num_forces": store.num_forces,
             "force_names": FORCE_NAMES[:store.num_forces],
         }

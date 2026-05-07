@@ -73,7 +73,7 @@ function App() {
                   appCtx.modelForces[modelName] ?? new Map(),
                   appCtx.disabledTrajectories[modelName] ?? new Set<number>(),
                   appCtx.showTrajectoryDots,
-                  appCtx.historicHorizonM[modelName] ?? null,
+                  appCtx.numHistoricTokens[modelName] ?? null,
                   appCtx.forceConfig[modelName]?.enabled ?? [],
                   appCtx.forceScale,
                   info,

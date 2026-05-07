@@ -63,10 +63,10 @@ function DataLoader({ children }: { children: JSX.Element }) {
                 });
 
                 // Historic horizon
-                ctx.setHistoricHorizonM(prev => {
+                ctx.setNumHistoricTokens(prev => {
                     const updates: Record<string, number | null> = {};
                     for (const name of Object.keys(predRes)) {
-                        if (!(name in prev)) updates[name] = predRes[name].historic_horizon_m ?? null;
+                        if (!(name in prev)) updates[name] = predRes[name].num_historic_tokens ?? null;
                     }
                     return Object.keys(updates).length ? { ...prev, ...updates } : prev;
                 });

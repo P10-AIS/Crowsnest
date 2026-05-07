@@ -65,14 +65,14 @@ def load_all_predictions(directory: str = "Predictions") -> dict[str, Trajectory
                 lons = data.get("lons")
                 timestamps = data.get("timestamps")
 
-                if "historic_horizon_m" in data:
-                    raw = data["historic_horizon_m"]
+                if "num_historic_tokens" in data:
+                    raw = data["num_historic_tokens"]
                     try:
-                        historic_horizon_m = float(raw)
+                        num_historic_tokens = float(raw)
                     except (ValueError, TypeError):
-                        historic_horizon_m = float(pickle.loads(raw.item()))
+                        num_historic_tokens = float(pickle.loads(raw.item()))
                 else:
-                    historic_horizon_m = None
+                    num_historic_tokens = None
 
                 # Forces: (N, T, F, 2) or missing/empty
                 forces_raw = data.get("forces")
@@ -93,7 +93,7 @@ def load_all_predictions(directory: str = "Predictions") -> dict[str, Trajectory
 
                 store = TrajectoryStore(
                     name=model_name,
-                    historic_horizon_m=historic_horizon_m,
+                    num_historic_tokens=num_historic_tokens,
                     num_forces=num_forces,
                 )
 

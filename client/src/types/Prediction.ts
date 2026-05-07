@@ -4,7 +4,7 @@ import type { ZoomLevels } from "./ZoomLevels";
 
 
 export type Trajectory = {
-    historicHorizonM: number | null;
+    numHistoricTokens: number | null;
     trajectoryId: number;
     level: ZoomLevels<{
         padding: boolean[];

@@ -61,14 +61,14 @@ export function preparePoints(parsedPoints: ParsedTrajectory[], numZoomLevels: n
         }> = [];
 
         const totalPoints = traj.points.length;
-        
+
         // If the trajectory has 300 points, maxStep will be 10.
         // It will take every 10th point at zoom level 0.
         const maxStep = Math.max(minStep, Math.floor(totalPoints / targetPointsAtMinZoom));
 
         for (let zoom = 0; zoom < numZoomLevels; zoom++) {
             const zoomRatio = numZoomLevels > 1 ? zoom / (numZoomLevels - 1) : 0;
-            
+
             // Linear interpolation between maxStep and minStep
             const step = maxStep - zoomRatio * (maxStep - minStep);
             const stepInt = Math.max(1, Math.round(step));
@@ -83,15 +83,15 @@ export function preparePoints(parsedPoints: ParsedTrajectory[], numZoomLevels: n
                 boundingBox: bb,
             });
         }
-        
+
         return {
-            historicHorizonM: traj.historicHorizonM,
+            numHistoricTokens: traj.numHistoricTokens,
             trajectoryId: traj.trajectoryId,
-            level: zooms, 
+            level: zooms,
             enabled: true,
         };
     });
-    
+
     return points;
 }
 

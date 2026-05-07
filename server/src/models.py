@@ -19,5 +19,5 @@ class TrajectoryStore:
     """All trajectories for one model or label dataset."""
     name: str
     trajectories: list[Trajectory] = field(default_factory=list)
-    historic_horizon_m: float | None = None
+    num_historic_tokens: int | None = None
     num_forces: int = 0  # 0 means no forces available

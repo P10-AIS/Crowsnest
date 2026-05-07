@@ -13,14 +13,14 @@ export type RawForces = number[][][]; // [point_idx][force_idx][vx, vy]
 
 // Colors for up to 8 force components
 const FORCE_COLORS = [
-  "rgba(255, 200, 0, 0.9)",    // yellow
-  "rgba(0, 220, 255, 0.9)",    // cyan
-  "rgba(255, 80, 200, 0.9)",   // magenta
-  "rgba(80, 255, 120, 0.9)",   // green
-  "rgba(255, 140, 0, 0.9)",    // orange
-  "rgba(180, 80, 255, 0.9)",   // purple
-  "rgba(255, 255, 255, 0.9)",  // white
-  "rgba(255, 80, 80, 0.9)",    // red
+  "rgba(255, 200, 0, 1)",    // yellow
+  "rgba(0, 220, 255, 1)",    // cyan
+  "rgba(255, 80, 200, 1)",   // magenta
+  "rgba(80, 255, 120, 1)",   // green
+  "rgba(255, 140, 0, 1)",    // orange
+  "rgba(180, 80, 255, 1)",   // purple
+  "rgba(255, 255, 255, 1)",  // white
+  "rgba(255, 80, 80, 1)",    // red
 ];
 
 export function forceColor(forceIdx: number): string {
@@ -67,7 +67,7 @@ function drawArrow(
   const len = Math.sqrt(dx * dx + dy * dy);
   if (len < 1) return;
 
-  const headLen = Math.max(4, len * 0.3);
+  const headLen = Math.max(4, 3 + 10 * config.lineWidthScale / 3); // length of arrow head
   const angle = Math.atan2(dy, dx);
 
   ctx.strokeStyle = color;
@@ -151,7 +151,7 @@ export function drawPredictions(
   forces: Map<number, RawForces | null>,
   disabled: Set<number>,
   showDots: boolean,
-  historicHorizonMinutes: number | null,
+  num_historic_tokens: number | null,
   enabledForces: boolean[],
   forceScale: number,
   info: DrawInfo,
@@ -182,8 +182,8 @@ export function drawPredictions(
     });
 
     const baseTs = pts[0]?.ts;
-    const cutoffTs = baseTs !== undefined && historicHorizonMinutes !== null
-      ? baseTs + historicHorizonMinutes * 60
+    const cutoff = baseTs !== undefined && num_historic_tokens !== null
+      ? num_historic_tokens
       : null;
 
     // Segments
@@ -191,7 +191,7 @@ export function drawPredictions(
     for (let i = 1; i < pts.length; i++) {
       const start = pts[i - 1];
       const end = pts[i];
-      ctx.strokeStyle = cutoffTs !== null && end.ts <= cutoffTs
+      ctx.strokeStyle = cutoff !== null && i <= cutoff
         ? config.colors.label
         : config.colors.prediction;
       ctx.beginPath();
@@ -204,15 +204,15 @@ export function drawPredictions(
     if (zoom >= config.dotsZoom && showDots) {
       const s = config.radiusScale * 2;
       // let i = 0;
-      for (const pt of pts) {
-        ctx.fillStyle = cutoffTs !== null && pt.ts <= cutoffTs
+      for (let i = 0; i < pts.length; i++) {
+        ctx.fillStyle = cutoff !== null && i <= cutoff
           ? config.colors.label
           : config.colors.prediction;
 
         // if (idx === 10 && i++ === 150) {
         //   ctx.fillStyle = "rgb(0, 0, 0)";
         // }
-        ctx.fillRect(pt.x - s / 2, pt.y - s / 2, s, s);
+        ctx.fillRect(pts[i].x - s / 2, pts[i].y - s / 2, s, s);
       }
     }
 
