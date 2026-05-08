@@ -199,15 +199,16 @@ async def omniscale_proxy(request: Request):
 def list_images():
     images = []
     if os.path.exists(IMAGES_FOLDER):
-        images = [
-            f for f in os.listdir(IMAGES_FOLDER)
-            if os.path.isfile(os.path.join(IMAGES_FOLDER, f))
-            and f.lower().endswith((".tif", ".tiff"))
-        ]
+        for root, dirs, files in os.walk(IMAGES_FOLDER):
+            for f in files:
+                if f.lower().endswith((".tif", ".tiff")):
+                    rel_path = os.path.relpath(
+                        os.path.join(root, f), IMAGES_FOLDER)
+                    images.append(rel_path)
     return {"images": images}
 
 
-@app.get("/image/{filename}")
+@app.get("/image/{filename:path}")
 def get_image(filename: str):
     path = os.path.join(IMAGES_FOLDER, filename)
     if not (os.path.exists(path) and os.path.isfile(path)):
