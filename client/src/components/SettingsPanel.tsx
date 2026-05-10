@@ -50,7 +50,7 @@ function SettingsPanel() {
     }
 
     return (
-        <div className="absolute top-5 left-5 bg-white rounded p-4 shadow-lg z-2000 overflow-auto text-slate-600 text-sm max-h-[95vh]">
+        <div className="absolute top-5 left-5 bg-white rounded p-4 shadow-lg z-2000 overflow-auto text-slate-600 text-sm max-h-[85vh]">
             {hidden && (
                 <div className="flex">
                     <button className="hover:rotate-90 hover:scale-110 transition-transform hover:cursor-pointer" onClick={() => setHidden(false)}>
@@ -175,7 +175,9 @@ function SettingsPanel() {
                             return (
                                 <div key={modelName} className="flex flex-col space-y-2 pb-3 border-b border-slate-200 last:border-0 last:pb-0">
                                     <div className="flex flex-row items-center justify-between">
-                                        <span className="font-mono text-xs font-medium truncate">{modelName}</span>
+                                        <span className="font-mono text-xs font-medium truncate" title={modelName}>
+                                            {modelName}
+                                        </span>
                                         <input type="checkbox" className="ml-2 flex-shrink-0"
                                             checked={ctx.showModelPredictions[modelName] || false}
                                             onChange={(e) => handleTogglePrediction(e.target.checked, modelName)}

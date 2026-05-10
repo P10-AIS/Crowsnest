@@ -125,7 +125,7 @@ def load_all_labels(data_dir: str = "Data/DatasetTraj") -> dict[str, TrajectoryS
         return stores
 
     for filename in os.listdir(data_dir):
-        if not (filename.startswith("combined") and filename.endswith(".npz")):
+        if not (filename.startswith("label") and filename.endswith(".npz")):
             continue
 
         path = os.path.join(data_dir, filename)

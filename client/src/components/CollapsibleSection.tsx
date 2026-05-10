@@ -10,10 +10,10 @@ function CollapsibleSection({ title, children }: CollapsibleSectionProps) {
     const isEmpty = Children.count(children) === 0;
 
     return (
-        <div className="bg-gray-100 rounded overflow-hidden">
+        <div className="bg-gray-100 rounded">
             <button
                 onClick={() => !isEmpty && setCollapsed(!collapsed)}
-                className={`w-full flex items-center justify-between p-2 transition-colors focus:outline-none ${isEmpty ? 'cursor-default opacity-50' : 'hover:bg-gray-200'}`}
+                className={`sticky top-0 z-10 bg-gray-100 w-full flex items-center justify-between p-2 transition-colors focus:outline-none ${isEmpty ? 'cursor-default opacity-50' : 'hover:bg-gray-200'} ${!collapsed && !isEmpty ? 'shadow-md' : ''}`}
             >
                 <span className="text-sm font-semibold text-gray-700">{title}</span>
                 {isEmpty
@@ -27,7 +27,7 @@ function CollapsibleSection({ title, children }: CollapsibleSectionProps) {
                 }
             </button>
             {!collapsed && !isEmpty && (
-                <div className="p-2 pt-0 space-y-2">
+                <div className="overflow-y-auto max-h-52 p-2 space-y-2">
                     {children}
                 </div>
             )}
